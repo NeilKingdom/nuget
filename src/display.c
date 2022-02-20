@@ -1,33 +1,30 @@
+/**
+ * Briefing: Initialize and display the ncurses GUI
+ * 
+ * @author Neil Kingdom
+ * @version 1.0
+ * @since 10-25-2021
+*/
+
 #include <ncurses.h>
 #include <string.h>
 #include <math.h>
 
-#include "../deps/display.h"
-#include "../deps/nuget.h"
-#include "../deps/actions.h"
-#include "../deps/fileio.h"
+#include "display.h"
+#include "nuget.h"
+#include "actions.h"
+#include "fileio.h"
 
-/********************************************
-                 Functions
-********************************************/
-
-/********************************************
-Name: init_display
-Author: Neil Kingdom
-Date: Oct 25, 2021
-Return: dimensions* - return screen 
-	dimensions struct
-Params: N/A 
-Purpose: initialize and display the ncurses
-	GUI
-********************************************/
-dimensions* init_display(void) {
-
-	dimensions sDimensions;
-	dimensions* ret = NULL;
-	page defLayout; 
-	char* s_year;
-	const char* s_banner = "Nuget: The ncurses Budgeting Software";
+/**
+ * Briefing: Initialize the GUI and other data
+ * 
+ * @returns dimensions* Screen dimensions struct
+*/
+dimensions *init_display(void) {
+	dimensions *sdims;
+	page def_layout; 
+	char *year;
+	const char *header = "Nuget: The ncurses Budgeting Software";
 
 	enum cursorMode { INVISIBLE, NORMAL, BLINKING };
 
@@ -52,57 +49,34 @@ dimensions* init_display(void) {
 	assume_default_colors(COLOR_WHITE, -1); /* Keeps attributes from terminal such as transparency on */
 	attrset(COLOR_PAIR(COL_PAIR2));  /* Apply color pair the the entire window (stdwin is assumed) */
 
-	calc_cell_dimensions(&sDimensions);
+	calc_cell_dimensions(sdims);
 
-	s_year = get_year();
-	set_year(&defLayout, s_year);
+	year = get_year();
+	/* Set year */
 
-	/* Print title bar */
-	mvprintw(0, 0, s_banner);
-	mvprintw(0, (sDimensions.f_sWidth/2) - (strlen(s_year)/2), s_year);
+	/* Print header title */
+	mvprintw(0, 0, header);
+	mvprintw(0, (sdims->swidth/2) - (strlen(year)/2), year);
 
-	if(check_existing(s_year) == FALSE) {
-		load_defaults(&defLayout);	
-		write_defaults(&defLayout, sDimensions);
+	if (!check_existing(year)) {
+		load_defaults(&def_layout);	
+		write_defaults(&def_layout, *sdims);
 	}
 	
 	else {
-		printf("Found the file %s.txt\n", defLayout.s_year);
+		printf("Found the file %s.conf\n", def_layout.year);
 	}
 
-	ret = &sDimensions;
-	return ret;
+	return sdims;
 }
 
-/********************************************
-Name: calc_cell_dimensions
-Author: Neil Kingdom
-Date: Oct 25, 2021
-Return: N/A 
-Params: p_sDimensions - pointer to screen
-	dimensions struct 
-Purpose: calculate the screen width, height,
-	and the cell width, height  
-********************************************/
-void calc_cell_dimensions(dimensions* p_sDimensions) {
-
-	getmaxyx(stdscr, p_sDimensions->f_sHeight, p_sDimensions->f_sWidth);
-	p_sDimensions->cell_height = floor(p_sDimensions->f_sHeight/MAX_ROWS);
-	p_sDimensions->cell_width = floor(p_sDimensions->f_sWidth/MAX_COLS);
-
-	return;
-}
-
-/********************************************
-Name: nuget_refresh
-Author: Neil Kingdom
-Date: Oct 25, 2021
-Return: N/A 
-Params: N/A 
-Purpose: wrapper for ncurses refresh() func 
-********************************************/
-void nuget_refresh(void) {
-
-	refresh();
-	return;
+/**
+ * Briefing: Calculate the screen and cell width/height
+ * 
+ * @param sdims_p Pointer to screen dimensions struct
+*/
+void calc_cell_dimensions(dimensions *sdims_p) {
+	getmaxyx(stdscr, sdims_p->sheight, sdims_p->swidth);
+	sdims_p->cell_height = floor(sdims_p->sheight / MAX_ROWS);
+	sdims_p->cell_width  = floor(sdims_p->swidth / MAX_COLS);
 }

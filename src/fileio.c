@@ -1,185 +1,133 @@
+/**
+ * Briefing: Read/Write data to the configuration files
+ *
+ * @author Neil Kingdom
+ * @version 1.0
+ * @since 10-25-2021
+*/
+
 #include <ncurses.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <stddef.h>
 #include <errno.h>
 #include <string.h>
 
-#include "../deps/fileio.h"
-#include "../deps/nuget.h"
+#include "fileio.h"
+#include "nuget.h"
 
-/********************************************
-					  Functions
-********************************************/
-
-/********************************************
-Name: set_year
-Author: Neil Kingdom
-Date: Oct 25, 2021
-Return: N/A
-Params: p_data - page struct containing info
-	about the layout of the page
-		  s_year - the current year
-Purpose: set the s_year member variable in
-	page struct 
-********************************************/
-void set_year(page* p_data, char* s_year) {
-
-	p_data->s_year = s_year;
-	return;
-}
-
-/********************************************
-Name: load_defaults
-Author: Neil Kingdom
-Date: Oct 25, 2021
-Return: returns exit status
-Params: p_data - page struct containing info
-	about the layout of the page
-Purpose: load the default page data into page
-	struct
-********************************************/
-int load_defaults(page* p_data) {
-
+/**
+ * Briefing: Load the default page data into page struct
+ *
+ * @param data_p Page struct containing info about page layout
+ * @return Returns exit status of the function
+*/
+int load_defaults(page *data_p) {
 	int i;
-	const char* top = "A";
-	const char* left = "0";
+	const char *top = "A";
+	const char *left = "0";
 
-	if(!p_data->s_year) {
-		printf("Error in: %s, line: %d\n", __FILE__, __LINE__);
-		printf("Member variable 'year' must be initialized in struct p_data\n");
+	if (!data_p->year) {
+		fprintf(stderr, "Error!! File: %s, Function: %s, Line: %d\n", __FILE__, __FUNCTION__, __LINE__);
+		fprintf(stderr, "Member variable 'year' must be initialized in struct data_p\n");
 		return NUGET_ERR;
 	}
 
-	p_data->s_col_data = malloc(MAX_COLS * 2 * sizeof(top));
-	p_data->s_row_data = malloc(MAX_ROWS * sizeof(left));
+	data_p->col_data = malloc(MAX_COLS * 2 * sizeof(top));
+	data_p->row_data = malloc(MAX_ROWS * sizeof(left));
 
-	/* TODO: I'm thinking that it actually would be best to create a defaults.txt file to read from */
-	for(i = 0; i < MAX_COLS * 2; i++) 
-		*(p_data->s_col_data+i) = "A";
+	for (i = 0; i < MAX_COLS * 2; i++) 
+		*(data_p->col_data + i) = "A";
 
-	for(i = 0; i < MAX_ROWS; i++) 
-		*(p_data->s_row_data+i) = "0";
+	for (i = 0; i < MAX_ROWS; i++) 
+		*(data_p->row_data + i) = "0";
 
 	return 0;
 }
 
-/********************************************
-Name: write_defaults
-Author: Neil Kingdom
-Date: Oct 25, 2021
-Return: N/A
-Params: p_data - page struct containing info
-	about the layout of the page
-		  sDimensions - struct containing info
-	about screen dimensions
-Purpose: write default data onto the screen
-********************************************/
-void write_defaults(page* p_data, dimensions sDimensions) {
+/**
+ * Briefing: Write data onto the screen
+ * 
+ * @param data_p Page struct containing info about page layout
+ * @param sdims Struct containing info about screen dimensions
+*/
+void write_defaults(page *data_p, dimensions sdims) {
+	int i;
+	unsigned x, y, cell_width, cell_height;	
 
-	int x, y, i, cell_width, cell_height;	
+	cell_width = sdims.cell_width;
+	cell_height = sdims.cell_height;
 
-	cell_width = sDimensions.cell_width;
-	cell_height = sDimensions.cell_height;
-
-	/* Print header data */
-  	for(i = 0, x = cell_width, y = cell_height; x < MAX_COLS * cell_width * 2; x += cell_width, i++) 
-		mvprintw(y, x, "%s", *(p_data->s_col_data+i));
+	/* Print topbar data */
+  	for (i = 0, x = cell_width, y = cell_height; x < (MAX_COLS * cell_width) * 2; x += cell_width, i++) {
+		mvprintw(y, x, "%s", *(data_p->col_data + i));
+		nuget_mvchgat(y, x, cell_width, A_NORMAL, 2);
+	}
 
 	/* Print sidebar data */
-	for(i = 0, y = 2 * cell_height; y < MAX_ROWS * cell_height; y += cell_height, i++) 
-		mvprintw(y, 0, "%s", *(p_data->s_row_data+i));	
+	for (i = 0, y = cell_height * 2; y < (MAX_ROWS * cell_height); y += cell_height, i++) {
+		mvprintw(y, 0, "%s", *(data_p->row_data + i));	
+		nuget_mvchgat(y, 0, cell_width, A_NORMAL, 2);
+	}
 
+	refresh();
 	return;
 }
 
-/********************************************
-Name: check_existing
-Author: Neil Kingdom
-Date: Oct 25, 2021
-Return: returns boolean indicating if the 
-	file for the current year exists 
-Params: s_year - the current year
-Purpose: check if the file for the current
-	year exists in order to decide if it 
-	should be loaded or not
-********************************************/
-int check_existing(char* s_year) {
+/**
+ * Briefing: Check if a configuration file for the current year
+ * 			 exists in order to decide if it should be loaded or not
+ *
+ * @param year String representing the current year
+ * @return Returns true if file exists, otherwise returns false
+*/
+bool check_existing(char *year) {
 
-	/* For now, the programs assumes that files are located in ../tmp/ */	
-	char* s_test_file = "../tmp/";
-
-	/* TODO: Fix bug here 
-	strcat(test_file, year);
-	strcat(test_file, ".txt");
-	*/
-
-	/* Check if file exists already */
-	if(access(s_test_file, F_OK) != 0)
-		return TRUE;
-	else
-		return FALSE;
 }
 
-/********************************************
-Name: load_existing
-Author: Neil Kingdom
-Date: Oct 25, 2021
-Return: returns exit status
-Params: N/A
-Purpose: load an existing file into page 
-	struct 
-********************************************/
+/**
+ * Briefing: Load an existing config file into page struct 
+ * 
+ * @return Returns exit status of the function
+*/
 int load_existing(void) {
-
-	FILE* p_file;
-	/* Avoid byte mode so that the text files are human readable/configurable */
-	p_file = fopen("../tmp/defaults.txt", "r");
+	FILE* fp;
+	fp = fopen("../tmp/defaults.conf", "r");
 	
-	if(p_file == NULL) {
-		printf("Error in: %s, line: %d\n", __FILE__, __LINE__);
-		printf("Member variable 'year' must be initialized in struct p_data\n");
-		fclose(p_file);
+	if(fp == NULL) {
+		perror("Failed to open defaults.conf");
+		fclose(fp);
 		return NUGET_ERR;
 	}
 
-	fclose(p_file);
+	fclose(fp);
 	return 0;	
 }
 
-/********************************************
-Name: load_defaults
-Author: Neil Kingdom
-Date: Oct 25, 2021
-Return: N/A
-Params: p_data - page struct containing info
-	about the layout of the page
-		  sDimensions - struct containing info
-	about screen dimensions
-Purpose: write existing data onto the screen
-********************************************/
-void write_existing(page* p_data, dimensions sDimensions) {
+/**
+ * Briefing: Write existing data onto the screen
+ * 
+ * @param data_p Page struct containing info about the layout of the page
+ * @param sdims Struct containing info about screen dimensions
+*/
+void write_existing(page *data_p, dimensions sdims) {
 
 	return;
 }
 
-/********************************************
-Name: get_year
-Author: Neil Kingdom
-Date: Oct 25, 2021
-Return: returns the current year
-Params: N/A
-Purpose: return the current year
-********************************************/
-char* get_year(void) {
+/**
+ * Briefing: Return the current year
+*/
+char *get_year(void) {
+	time_t t;
+	struct tm *time_info;
+	char *year;
 
-	time_t myTime;
-	struct tm* timeInfo;
-	char* s_year;
+	time(&t);
+	time_info = localtime(&t);
+	/* I don't like this */
+	year = asctime(time_info)+20;
 
-	time(&myTime);
-	timeInfo = localtime(&myTime);
-	s_year = asctime(timeInfo)+20;
-
-	return s_year;
+	return year;
 }
