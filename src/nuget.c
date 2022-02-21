@@ -1,78 +1,88 @@
+/**
+ * Briefing: Starts the program and handles key-press events
+ *
+ * @author Neil Kindom
+ * @version 1.0
+ * @since 10-25-2021
+*/
 #include <ncurses.h>
 
-#include "../deps/nuget.h"
-#include "../deps/actions.h"
-#include "../deps/display.h"
+#include "nuget.h"
+#include "display.h"
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
 
-	int x = 0, y = 0, c, cell_width, cell_height;
+	char c;
+	unsigned x, y, cell_width, cell_height;
+	dimensions *sdims = NULL;
 
-	dimensions* sDimensions = init_display();
-	cell_width = sDimensions->cell_width;
-	cell_height = sDimensions->cell_height;
+	sdims 		= init_display();
+	cell_width  = sdims->cell_width;
+	cell_height = sdims->cell_height;
+	/* Start cursor at correct position (x: 1, y: 3) */
+	x = cell_width;
+	y = cell_height * 2;
+	move(y, x);
+	/* Set initial attributes/colors before user has moved cursor */
+	mvchgat(cell_height, x, cell_width, A_BOLD, 1, NULL); /* Top Left cell in the month row */
+	mvchgat(y, 0, cell_width, A_BOLD, 1, NULL);				/* Top cell in the profits/expenses column */
+	refresh();
 
-/*******************************************
-					Main Loop
-*******************************************/
-
-	while((c = getch()) != QUIT) {
+	while((c = getch()) != K_QUIT) {
 		switch(c) {
-			case ENTER:
+			case K_ENTER:
+				;;
 				break;
 
-			case CURSOR_LEFT:
-				/*if(x > 0) {*/
-					nuget_mvchgat(cell_height, x, cell_width, A_NORMAL, 0);
-					nuget_mvchgat(y, 0, cell_width, A_NORMAL, 0);
+			case K_CURSOR_LEFT:
+					mvchgat(cell_height, x, cell_width, A_NORMAL, 2, NULL);
+					mvchgat(y, 0, cell_width, A_NORMAL, 2, NULL);
 
-					nuget_mvchgat(y, x, cell_width, A_NORMAL, 0);
+					mvchgat(y, x, cell_width, A_NORMAL, 0, NULL);
 					x -= cell_width;
-				/*}*/
 				break;
 
-			case CURSOR_DOWN:
-				/*if(y < sDimensions->f_sHeight) {*/
-					nuget_mvchgat(cell_height, x, cell_width, A_NORMAL, 0);
-					nuget_mvchgat(y, 0, cell_width, A_NORMAL, 0);
+			case K_CURSOR_DOWN:
+					mvchgat(cell_height, x, cell_width, A_NORMAL, 2, NULL);
+					mvchgat(y, 0, cell_width, A_NORMAL, 2, NULL);
 
-					nuget_mvchgat(y, x, cell_width, A_NORMAL, 0);
+					mvchgat(y, x, cell_width, A_NORMAL, 0, NULL);
 					y += cell_height;
-				/*}*/
 				break;
 
-			case CURSOR_UP:
-				/*if(y > cell_height) {*/
-					nuget_mvchgat(cell_height, x, cell_width, A_NORMAL, 0);
-					nuget_mvchgat(y, 0, cell_width, A_NORMAL, 0);
+			case K_CURSOR_UP:
+					mvchgat(cell_height, x, cell_width, A_NORMAL, 2, NULL);
+					mvchgat(y, 0, cell_width, A_NORMAL, 2, NULL);
 
-					nuget_mvchgat(y, x, cell_width, A_NORMAL, 0);
+					mvchgat(y, x, cell_width, A_NORMAL, 0, NULL);
 					y -= cell_height;
-				/*}*/
 				break;
 
-			case CURSOR_RIGHT:
-				/*if(x < sDimensions->f_sWidth) {*/
-					nuget_mvchgat(cell_height, x, cell_width, A_NORMAL, 0);
-					nuget_mvchgat(y, 0, cell_width, A_NORMAL, 0);
+			case K_CURSOR_RIGHT:
+					mvchgat(cell_height, x, cell_width, A_NORMAL, 2, NULL);
+					mvchgat(y, 0, cell_width, A_NORMAL, 2, NULL);
 
-					nuget_mvchgat(y, x, cell_width, A_NORMAL, 0);
+					mvchgat(y, x, cell_width, A_NORMAL, 0, NULL);
 					x += cell_width;
-				/*}*/
 				break;
 
-			case SAVE:
+			case K_SAVE:
+				;;
+				break;
+
+			default:
+				;;
 				break;
 		}
 
 		move(y, x);
 
-		nuget_mvchgat(cell_height, x, cell_width, A_BOLD, 1);
-		nuget_mvchgat(y, 0, cell_width, A_BOLD, 1);
-
-		nuget_mvchgat(y, x, cell_width, A_BLINK, 2);
+		mvchgat(cell_height, x, cell_width, A_BOLD, 1, NULL);
+		mvchgat(y, 0, cell_width, A_BOLD, 1, NULL);
+		refresh();
 	} 
 
+	delwin(content_win);
 	endwin();
 	return 0;
 }
