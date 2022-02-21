@@ -5,11 +5,9 @@
  * @version 1.0
  * @since 10-25-2021
 */
-
 #include <ncurses.h>
 
 #include "nuget.h"
-#include "actions.h"
 #include "display.h"
 
 int main(int argc, char *argv[]) {
@@ -21,14 +19,13 @@ int main(int argc, char *argv[]) {
 	sdims 		= init_display();
 	cell_width  = sdims->cell_width;
 	cell_height = sdims->cell_height;
-	/* Start cursor at correct position */
+	/* Start cursor at correct position (x: 1, y: 3) */
 	x = cell_width;
 	y = cell_height * 2;
 	move(y, x);
 	/* Set initial attributes/colors before user has moved cursor */
-	mvchgat(cell_height, x, cell_width, A_BOLD, 1, NULL);
-	mvchgat(y, 0, cell_width, A_BOLD, 1, NULL);
-	mvchgat(y, x, cell_width, A_BLINK, 2, NULL);
+	mvchgat(cell_height, x, cell_width, A_BOLD, 1, NULL); /* Top Left cell in the month row */
+	mvchgat(y, 0, cell_width, A_BOLD, 1, NULL);				/* Top cell in the profits/expenses column */
 	refresh();
 
 	while((c = getch()) != K_QUIT) {
@@ -38,43 +35,35 @@ int main(int argc, char *argv[]) {
 				break;
 
 			case K_CURSOR_LEFT:
-				/*if(x > 0) {*/
 					mvchgat(cell_height, x, cell_width, A_NORMAL, 2, NULL);
 					mvchgat(y, 0, cell_width, A_NORMAL, 2, NULL);
 
 					mvchgat(y, x, cell_width, A_NORMAL, 0, NULL);
 					x -= cell_width;
-				/*}*/
 				break;
 
 			case K_CURSOR_DOWN:
-				/*if(y < sdims->sheight) {*/
 					mvchgat(cell_height, x, cell_width, A_NORMAL, 2, NULL);
 					mvchgat(y, 0, cell_width, A_NORMAL, 2, NULL);
 
 					mvchgat(y, x, cell_width, A_NORMAL, 0, NULL);
 					y += cell_height;
-				/*}*/
 				break;
 
 			case K_CURSOR_UP:
-				/*if(y > cell_height) {*/
 					mvchgat(cell_height, x, cell_width, A_NORMAL, 2, NULL);
 					mvchgat(y, 0, cell_width, A_NORMAL, 2, NULL);
 
 					mvchgat(y, x, cell_width, A_NORMAL, 0, NULL);
 					y -= cell_height;
-				/*}*/
 				break;
 
 			case K_CURSOR_RIGHT:
-				/*if(x < sdims->swidth) {*/
 					mvchgat(cell_height, x, cell_width, A_NORMAL, 2, NULL);
 					mvchgat(y, 0, cell_width, A_NORMAL, 2, NULL);
 
 					mvchgat(y, x, cell_width, A_NORMAL, 0, NULL);
 					x += cell_width;
-				/*}*/
 				break;
 
 			case K_SAVE:
@@ -90,11 +79,10 @@ int main(int argc, char *argv[]) {
 
 		mvchgat(cell_height, x, cell_width, A_BOLD, 1, NULL);
 		mvchgat(y, 0, cell_width, A_BOLD, 1, NULL);
-
-		mvchgat(y, x, cell_width, A_BLINK, 2, NULL);
 		refresh();
 	} 
 
+	delwin(content_win);
 	endwin();
 	return 0;
 }

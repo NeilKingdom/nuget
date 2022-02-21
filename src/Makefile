@@ -10,15 +10,16 @@ OBJ=$(patsubst %.c, $(ODIR)/%.o, $(SRC))
 
 CC=gcc
 DEBUG=-g
-CFLAGS+=$(DEBUG) -I$(DDIR) -Wall -Wextra -Werror
+IDIR=-I$(DDIR)
+CFLAGS+=$(DEBUG) -Wall -O2 -fPIC
 LDFLAGS+=-lncurses -lm
 BIN=nuget
 
 all: $(OBJ)
 	$(CC) -o $(BIN) $^ $(LDFLAGS) $(CFLAGS)
 
-$(OBJ): $(SRC) $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+$(ODIR)/%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(IDIR) $(CFLAGS) 
 
 .PHONY: clean
 

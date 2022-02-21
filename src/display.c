@@ -6,13 +6,11 @@
  * @since 10-25-2021
 */
 
-#include <ncurses.h>
 #include <string.h>
 #include <math.h>
 
 #include "display.h"
 #include "nuget.h"
-#include "actions.h"
 #include "fileio.h"
 
 /**
@@ -21,12 +19,11 @@
  * @returns dimensions* Screen dimensions struct
 */
 dimensions *init_display(void) {
-	dimensions *sdims;
-	page def_layout; 
+	extern WINDOW content_win;
+	static dimensions sdims = { 0 }; /* stdscr dimensions */
+	dimensions *sdims_p = NULL; 
+	page layout; 
 	char *year;
-	const char *header = "Nuget: The ncurses Budgeting Software";
-
-	enum cursorMode { INVISIBLE, NORMAL, BLINKING };
 
 	/* TODO: Change to check for parameter eg. -n = no color */
 	/* Check for color support in terminal */
@@ -47,27 +44,25 @@ dimensions *init_display(void) {
 	/* Color pairs */
 	start_color();
 	assume_default_colors(COLOR_WHITE, -1); /* Keeps attributes from terminal such as transparency on */
-	attrset(COLOR_PAIR(COL_PAIR2));  /* Apply color pair the the entire window (stdwin is assumed) */
+	attrset(COLOR_PAIR(COL_PAIR2));  		 /* Apply color pair the the entire window (stdwin is assumed) */
 
-	calc_cell_dimensions(sdims);
-
+	calc_cell_dimensions(&sdims);
 	year = get_year();
-	/* Set year */
 
-	/* Print header title */
-	mvprintw(0, 0, header);
-	mvprintw(0, (sdims->swidth/2) - (strlen(year)/2), year);
+	/* Print year */
+	mvprintw(0, (sdims.win_width/2) - (strlen(year)/2), year);
 
-	if (!check_existing(year)) {
-		load_defaults(&def_layout);	
-		write_defaults(&def_layout, *sdims);
-	}
+	/* Load config data */
+	load_config(&layout);	
+	write_to_screen(&layout, sdims);
 	
-	else {
-		printf("Found the file %s.conf\n", def_layout.year);
-	}
+	/* Initialize the content window */
+	content_win = create_win(CWIN_HEIGHT * sdims.cell_height, sdims.win_width, sdims.win_height, 0);
+	mvprintw(content_win, 0, 0, "Testing the new window...");
+	refresh();
 
-	return sdims;
+	sdims_p = &sdims;
+	return sdims_p;
 }
 
 /**
@@ -76,7 +71,18 @@ dimensions *init_display(void) {
  * @param sdims_p Pointer to screen dimensions struct
 */
 void calc_cell_dimensions(dimensions *sdims_p) {
-	getmaxyx(stdscr, sdims_p->sheight, sdims_p->swidth);
-	sdims_p->cell_height = floor(sdims_p->sheight / MAX_ROWS);
-	sdims_p->cell_width  = floor(sdims_p->swidth / MAX_COLS);
+	/* getmaxyx is a macro so apply caution when passing arguments */
+	getmaxyx(stdscr, (sdims_p->sheight), (sdims_p->swidth)); 
+	sdims_p->win_height -= CWIN_HEIGHT;
+	sdims_p->cell_height = floor(sdims_p->sheight); 
+	sdims_p->cell_width  = floor(sdims_p->swidth / MAX_ONSCR_COLS);
+}
+
+WINDOW *create_win(int height, int width, int starty, int startx) {
+	WINDOW *win;
+	win = newwin(height, width, starty, startx);
+	box(win, 0, 0);
+	wrefresh(win);
+
+	return win;
 }

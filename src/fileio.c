@@ -10,124 +10,166 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-#include <stddef.h>
 #include <errno.h>
 #include <string.h>
 
 #include "fileio.h"
 #include "nuget.h"
 
-/**
- * Briefing: Load the default page data into page struct
+/*
+ * Layout of the default file:
+ * 
+ * [Row Content]
+ * Jan Est
+ * Jan Act
+ * Feb Est
+ * Feb Act
+ * ...
+ * [Col Content] 
+ * Profits
+ * 
+ * Job
+ * Other
+ * 
+ * Expenses
  *
- * @param data_p Page struct containing info about page layout
- * @return Returns exit status of the function
+ * Food
+ * Gas
+ * Haircuts
+ * ... 
+ * [Page Content]
+ * [Col #1]
+ * 10.35
+ * 
+ * 910.23
+ * [Col #3]
+ * 56.5
+ * 344.23
+ * [Col #10]
+ * 
+ * 
+ * 12343.35
+ * ...
 */
-int load_defaults(page *data_p) {
-	int i;
-	const char *top = "A";
-	const char *left = "0";
+int create_defaults(void) {
+	int err, i;
+	size_t row_len, col_len;
+	FILE *fp = NULL;		
+	char fpath[50];
+	const char *rc = "[Row Content]\n";
+	const char *cc = "[Col Content]\n";
+	const char *pc = "[Page Content]\n";
 
-	if (!data_p->year) {
-		fprintf(stderr, "Error!! File: %s, Function: %s, Line: %d\n", __FILE__, __FUNCTION__, __LINE__);
-		fprintf(stderr, "Member variable 'year' must be initialized in struct data_p\n");
+	strcat(fpath, TEMP_DIR);
+	strcat(fpath, "/");
+	strcat(fpath, DEF_CONF);
+
+	/* Remove file to start with a blank slate */
+	err = remove(fpath);
+	if (-1 == err) {
+		fprintf(stderr, "Failed to delete %s: %s", DEF_CONF, strerror(err));
+		return NUGET_ERR;
+	}
+	
+	fp = fopen(fpath, "w");
+	if (fp == NULL) {
+		perror("Could not open file for write");
 		return NUGET_ERR;
 	}
 
-	data_p->col_data = malloc(MAX_COLS * 2 * sizeof(top));
-	data_p->row_data = malloc(MAX_ROWS * sizeof(left));
+	/* TODO: Perhaps best to test this */
+	row_len = sizeof(def_row)/sizeof(def_row[0]);
+	col_len = sizeof(def_col)/sizeof(def_col[0]);
 
-	for (i = 0; i < MAX_COLS * 2; i++) 
-		*(data_p->col_data + i) = "A";
+	fwrite(rc, sizeof(rc), 1, fp);
+	for (i = 0; i < row_len, i++) {
+		fwrite(def_col[i], sizeof(def_col[i]), 1, fp);
+		fputc('\n', fp);
+	}
 
-	for (i = 0; i < MAX_ROWS; i++) 
-		*(data_p->row_data + i) = "0";
+	fwrite(cc, sizeof(cc), 1, fp);
+	for (i = 0; i < col_len, i++) {
+		fwrite(def_row[i], sizeof(def_row[i]), 1, fp);
+		fputc('\n', fp);
+	}
 
 	return 0;
 }
 
-/**
- * Briefing: Write data onto the screen
- * 
- * @param data_p Page struct containing info about page layout
- * @param sdims Struct containing info about screen dimensions
-*/
-void write_defaults(page *data_p, dimensions sdims) {
+int load_config(page *page_p, char *year) {
+	char c;
 	int i;
-	unsigned x, y, cell_width, cell_height;	
-
-	cell_width = sdims.cell_width;
-	cell_height = sdims.cell_height;
-
-	/* Print topbar data */
-  	for (i = 0, x = cell_width, y = cell_height; x < (MAX_COLS * cell_width) * 2; x += cell_width, i++) {
-		mvprintw(y, x, "%s", *(data_p->col_data + i));
-		nuget_mvchgat(y, x, cell_width, A_NORMAL, 2);
+	long in, out;
+	unsigned x, y;
+	FILE *fp = NULL;
+	char fname[20];
+	char *csection = NULL;
+			
+	if (check_existing(year) == true) {
+		strcat(fname, year);
+		strcat(fname, ".conf");	
+	}
+	else {
+		strcat(fname, DEF_CONF);
 	}
 
-	/* Print sidebar data */
-	for (i = 0, y = cell_height * 2; y < (MAX_ROWS * cell_height); y += cell_height, i++) {
-		mvprintw(y, 0, "%s", *(data_p->row_data + i));	
-		nuget_mvchgat(y, 0, cell_width, A_NORMAL, 2);
-	}
-
-	refresh();
-	return;
-}
-
-/**
- * Briefing: Check if a configuration file for the current year
- * 			 exists in order to decide if it should be loaded or not
- *
- * @param year String representing the current year
- * @return Returns true if file exists, otherwise returns false
-*/
-bool check_existing(char *year) {
-
-}
-
-/**
- * Briefing: Load an existing config file into page struct 
- * 
- * @return Returns exit status of the function
-*/
-int load_existing(void) {
-	FILE* fp;
-	fp = fopen("../tmp/defaults.conf", "r");
-	
-	if(fp == NULL) {
-		perror("Failed to open defaults.conf");
-		fclose(fp);
+	fp = fopen(fname, "r");	
+	if (fp == NULL) {
+		perror("Could not open file for read");
 		return NUGET_ERR;
 	}
 
-	fclose(fp);
-	return 0;	
+	/* Parse contents of config file into page struct */
+	while ((c = fgetc(fp)) != EOF) {
+		/* Parse content section */
+		switch (c) {
+			case '[':
+				in = ftell(fp);
+				break;
+			case ']':
+				out = ftell(fp);
+				/* TODO: Test length of out - in */
+				csection = malloc(out - in);
+				fseek(fp, in, SEEK_SET);
+				fread(csection, sizeof(csection) - 1, 1, fp);
+				fseek(fp, out, SEEK_SET);
+	
+				if (strcmp(csection, "Row Content") == 0) { printf("Row Content\n"); }
+				else if (strcmp(csection, "Col Content") == 0) { printf("Col Content\n"); }
+				else if (strcmp(csection, "Page Content") == 0) { printf("Page Content\n"); }
+					
+				break;
+		}	
+	}
 }
 
-/**
- * Briefing: Write existing data onto the screen
- * 
- * @param data_p Page struct containing info about the layout of the page
- * @param sdims Struct containing info about screen dimensions
-*/
-void write_existing(page *data_p, dimensions sdims) {
+bool check_existing(char *year) {
+	char fname[20];
+	struct stat stat_buf;
+   int exists;
 
-	return;
+	strcat(fname, year);
+	strcat(fname, ".conf");
+
+	exists = stat(fname, &stat_buf);
+   if(exists == 0)
+       return true;
+   else  
+       return false;
 }
 
-/**
- * Briefing: Return the current year
-*/
+void write_to_screen(page *page_p, dimensions dims) {
+	
+}
+
 char *get_year(void) {
-	time_t t;
-	struct tm *time_info;
 	char *year;
+	time_t t = time(NULL);
+	struct tm tlocal = *localtime(&t);
 
-	time(&t);
-	time_info = localtime(&t);
-	/* I don't like this */
-	year = asctime(time_info)+20;
+	year = itoa((tlocal.tm_year + 1900), year, 10);	
+	assert(strcmp(year, "2022") == 0);
 
 	return year;
 }
+
