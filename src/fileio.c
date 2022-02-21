@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <assert.h>
+#include <sys/stat.h>
 
 #include "fileio.h"
 #include "nuget.h"
@@ -51,71 +53,81 @@
  * 12343.35
  * ...
 */
-int create_defaults(void) {
-	int err, i;
-	size_t row_len, col_len;
+int create_defaults(dimensions sdims) {
+	/*int err, i;*/
 	FILE *fp = NULL;		
-	char fpath[50];
+	char fpath[256] = { 0 }; /* Hard path limit of 256 characters */
+	/*
 	const char *rc = "[Row Content]\n";
 	const char *cc = "[Col Content]\n";
 	const char *pc = "[Page Content]\n";
+	*/
 
 	strcat(fpath, TEMP_DIR);
 	strcat(fpath, "/");
 	strcat(fpath, DEF_CONF);
 
-	/* Remove file to start with a blank slate */
+	/* This is only necessary if we want to create defaults.conf when it
+      already exists, which pressumably isn't the case
 	err = remove(fpath);
 	if (-1 == err) {
-		fprintf(stderr, "Failed to delete %s: %s", DEF_CONF, strerror(err));
+		fprintf(stderr, "Failed to delete %s: %s", DEF_CONF, strerror(errno));
 		return NUGET_ERR;
 	}
+	*/
 	
 	fp = fopen(fpath, "w");
 	if (fp == NULL) {
-		perror("Could not open file for write");
+		fprintf(stderr, "Could not open file defaults.conf for write: %s", strerror(errno));
+		fclose(fp);
 		return NUGET_ERR;
 	}
 
-	/* TODO: Perhaps best to test this */
-	row_len = sizeof(def_row)/sizeof(def_row[0]);
-	col_len = sizeof(def_col)/sizeof(def_col[0]);
-
+	/* TODO: Segfaults at the moment
 	fwrite(rc, sizeof(rc), 1, fp);
-	for (i = 0; i < row_len, i++) {
-		fwrite(def_col[i], sizeof(def_col[i]), 1, fp);
-		fputc('\n', fp);
-	}
-
-	fwrite(cc, sizeof(cc), 1, fp);
-	for (i = 0; i < col_len, i++) {
+	for (i = 0; i < sdims.onscr_rows; i++) {
 		fwrite(def_row[i], sizeof(def_row[i]), 1, fp);
 		fputc('\n', fp);
 	}
 
+	fwrite(cc, sizeof(cc), 1, fp);
+	for (i = 0; i < sdims.onscr_cols; i++) {
+		fwrite(def_col[i], sizeof(def_col[i]), 1, fp);
+		fputc('\n', fp);
+	}
+	*/
+
+	fclose(fp);
 	return 0;
 }
 
-int load_config(page *page_p, char *year) {
+int load_config(page *page_p, dimensions sdims, char *year) {
 	char c;
+	/*
 	int i;
-	long in, out;
 	unsigned x, y;
+	*/
 	FILE *fp = NULL;
-	char fname[20];
+	long in = 0, out = 0;
+	char fpath[256] = { 0 };
 	char *csection = NULL;
+
+	strcat(fpath, TEMP_DIR);
+	strcat(fpath, "/");
 			
 	if (check_existing(year) == true) {
-		strcat(fname, year);
-		strcat(fname, ".conf");	
+		strcat(fpath, year);
+		strcat(fpath, ".conf");	
 	}
 	else {
-		strcat(fname, DEF_CONF);
+		create_defaults(sdims);
+		strcat(fpath, DEF_CONF);
 	}
 
-	fp = fopen(fname, "r");	
+	fp = fopen(fpath, "r");	
 	if (fp == NULL) {
-		perror("Could not open file for read");
+		fprintf(stderr, "Could not open file %s for read: %s", fpath, strerror(errno));
+		fclose(fp);
 		return NUGET_ERR;
 	}
 
@@ -128,7 +140,6 @@ int load_config(page *page_p, char *year) {
 				break;
 			case ']':
 				out = ftell(fp);
-				/* TODO: Test length of out - in */
 				csection = malloc(out - in);
 				fseek(fp, in, SEEK_SET);
 				fread(csection, sizeof(csection) - 1, 1, fp);
@@ -137,14 +148,21 @@ int load_config(page *page_p, char *year) {
 				if (strcmp(csection, "Row Content") == 0) { printf("Row Content\n"); }
 				else if (strcmp(csection, "Col Content") == 0) { printf("Col Content\n"); }
 				else if (strcmp(csection, "Page Content") == 0) { printf("Page Content\n"); }
-					
+	
+				free(csection);				
 				break;
 		}	
 	}
+	fclose(fp);
+	return 0;
+}
+
+void write_to_screen(page *page_p, dimensions sdims) {
+	do {} while(0);
 }
 
 bool check_existing(char *year) {
-	char fname[20];
+	char fname[10] = { 0 };
 	struct stat stat_buf;
    int exists;
 
@@ -158,18 +176,10 @@ bool check_existing(char *year) {
        return false;
 }
 
-void write_to_screen(page *page_p, dimensions dims) {
-	
-}
-
-char *get_year(void) {
-	char *year;
+int get_year(void) {
 	time_t t = time(NULL);
 	struct tm tlocal = *localtime(&t);
 
-	year = itoa((tlocal.tm_year + 1900), year, 10);	
-	assert(strcmp(year, "2022") == 0);
-
-	return year;
+	return tlocal.tm_year + 1900;
 }
 

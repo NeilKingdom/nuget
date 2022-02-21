@@ -11,12 +11,12 @@
 #include "display.h"
 
 int main(int argc, char *argv[]) {
-
 	char c;
 	unsigned x, y, cell_width, cell_height;
+	WINDOW *content_win = NULL;
 	dimensions *sdims = NULL;
 
-	sdims 		= init_display();
+	sdims 		= init_stdscr();
 	cell_width  = sdims->cell_width;
 	cell_height = sdims->cell_height;
 	/* Start cursor at correct position (x: 1, y: 3) */
