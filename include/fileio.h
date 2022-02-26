@@ -1,3 +1,9 @@
+/**
+ * The page is a collection of columns
+ * The columns are a collection of cells
+ * Each cell contains a string, but can only display a limited number of characters
+*/
+
 #ifndef FILEIO_H
 #define FILEIO_H
 
@@ -5,35 +11,37 @@
 
 #include "display.h"
 
-#define MAX_COLS 24
-#define MAX_ROWS 50
-#define DEF_CONF "defaults.conf"
+#define MAX_DATA  30
+/* DEF_ROWS/DEF_COLS just refer to the number of cells that get populated in defaults.conf */
+#define DEF_ROWS  15
+#define DEF_COLS  25
+#define DEF_CONF 	"defaults.conf"
+#define PG_START 	"[Page Start]"
+#define PG_END	  	"[Page End]"
+#define COL_START "[Col Start]"
+#define COL_END	"[Col End]"
+#define NUL_ENTRY	'\n'
 
 typedef struct {
-	char				 *cell_data;
-	size_t 			 cell_size;
+	char				 *data;
+	size_t 			 size;
 } cell;
 
 typedef struct {
-	unsigned short	 col_offset;
-	cell 	 			 col_data[MAX_COLS];	
+	unsigned short	 offset;
+	cell 	 			 cell_data[MAX_OFSCR_ROWS];	
 } col_arr;
 
 typedef struct {
-	unsigned short	 row_offset;
-	col_arr	 		 row_arr[MAX_ROWS];
+	unsigned short	 offset;
+	col_arr	 		 col_data[MAX_OFSCR_COLS];
 } page;
 
-enum cSection = { SEC_COL, SEC_ROW, SEC_PAGE };
-char *def_row[] = { "Jan Est", "Jan Act", "Feb Est", "Feb Act", "Mar Est", "Mar Act", "Apr Est", "Apr Act", "May Est", "May Act", "Jun Est", "Jun Act",
-						  "Jul Est", "Jul Act", "Aug Est", "Aug Act", "Sep Est", "Sep Act", "Oct Est", "Oct Act", "Nov Est", "Nov Act", "Dec Est", "Dec Act" };
-char *def_col[] = { "Profits", "", "Work", "Gifts", "Other", "", "Expenses", "", "Food", "Gas", "Haircut", "Bills", "Personal", "Other" };
-
 /* Functions */
-char *get_year(void);
-int  create_defaults(void);
-int  load_config(page *page_p);
+int  get_year(void);
+int  load_config(page *page_p, dimensions sdims, char *year);
+int  create_config(page *page_p, dimensions sdims, char *year);
+int  create_def_config(dimensions sdims);
 bool check_existing(char *year);
-void write_to_screen(page *page_p, dimensions dims);
 
 #endif
