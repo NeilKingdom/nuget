@@ -15,15 +15,19 @@ int main(int argc, char *argv[]) {
 	int tb, rb, bb, lb; 							 /* Boundaries: [top, right, bottom, left] */
 	unsigned x, y, cell_width, cell_height;
 	WINDOW *content_win = NULL;
-	dimensions sdims = { 0 };
+	dimensions sdims;
 
-	init_nuget_ui();
+	init_nuget_ui(&sdims);
 	cell_width  = sdims.cell_width;
 	cell_height = sdims.cell_height;
 	/* Start cursor at correct position (x: 1, y: 3) */
 	x = cell_width;
 	y = cell_height * 2;
 	move(y, x);
+
+	mvchgat(cell_height, x, cell_width, A_BOLD, 1, NULL); 
+	mvchgat(y, 0, cell_width, A_BOLD, 1, NULL);
+	mvchgat(y, x, cell_width, A_BOLD, 2, NULL);
 	refresh();
 
 	while((c = getch()) != K_QUIT) {
@@ -62,10 +66,6 @@ int main(int argc, char *argv[]) {
 				break;
 
 			case K_SAVE:
-				;;
-				break;
-
-			default:
 				;;
 				break;
 		}

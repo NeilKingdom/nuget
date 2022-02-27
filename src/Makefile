@@ -11,7 +11,7 @@ OBJ=$(patsubst %.c, $(ODIR)/%.o, $(SRC))
 CC=gcc
 DEBUG=-g
 IDIR=-I$(DDIR)
-CFLAGS+=$(DEBUG) -DTEMP_DIR=\"$(PROJ_DIR)/tmp\" -Wall -O2 -fPIC
+CFLAGS+=$(DEBUG) -DTEMP_DIR=\"$(PROJ_DIR)/tmp/\" -Wall -O2 -fPIC 
 LDFLAGS+=-lncurses -lm
 BIN=nuget
 

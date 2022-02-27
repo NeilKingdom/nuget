@@ -14,8 +14,8 @@
  * 											...............
  *											
  *				  --------------------------------------------------------------
- *           |								 content window								 | 
  *           |																					 | 
+ *           |								 content window								 | 
  *           |																					 | 
  *				  --------------------------------------------------------------
 */
@@ -47,14 +47,12 @@ typedef struct {
 	size_t	onscr_cols;  /* Num of on-screen cols */
 } dimensions;
 
-extern dimensions sdims;
 extern WINDOW 		*content_win;
 enum cursorMode { INVISIBLE, NORMAL, BLINKING };
 
 /* Functions */
-void init_nuget_ui(void);
+void init_nuget_ui(dimensions *dims_p);
 void calc_cell_dimensions(dimensions *dims_p);
-/*void redraw(page *page, dimensions sdims);*/
 WINDOW *create_win(int height, int width, int starty, int startx);
 void *sdims_watchdog(void *);
 

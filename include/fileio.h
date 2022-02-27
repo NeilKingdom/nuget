@@ -15,33 +15,46 @@
 /* DEF_ROWS/DEF_COLS just refer to the number of cells that get populated in defaults.conf */
 #define DEF_ROWS  15
 #define DEF_COLS  25
-#define DEF_CONF 	"defaults.conf"
+#define DEF_CONF 	"defaults"
 #define PG_START 	"[Page Start]"
 #define PG_END	  	"[Page End]"
 #define COL_START "[Col Start]"
 #define COL_END	"[Col End]"
-#define NUL_ENTRY	'\n'
+#define NUL_ENTRY	' '
 
 typedef struct {
-	char				 *data;
-	size_t 			 size;
+	size_t 			size;
+	char				*data;
 } cell;
 
 typedef struct {
-	unsigned short	 offset;
-	cell 	 			 cell_data[MAX_OFSCR_ROWS];	
-} col_arr;
-
-typedef struct {
-	unsigned short	 offset;
-	col_arr	 		 col_data[MAX_OFSCR_COLS];
+	unsigned short	col_offset;
+	unsigned short row_offset;
+	cell	 		   page_cells[MAX_OFSCR_COLS][MAX_OFSCR_ROWS];
 } page;
 
+static char* const top_row[] = { 
+										   "Jan Est", "Jan Act", "Feb Est", "Feb Act",
+									      "Mar Est", "Mar Act", "Apr Est", "Apr Act",
+											"May Est", "May Act", "Jun Est", "Jun Act",
+										   "Jul Est", "Jul Act", "Aug Est", "Aug Act",
+										   "Sep Est", "Sep Act", "Oct Est", "Oct Act",
+										   "Nov Est", "Nov Act", "Dec Est", "Dec Act",
+ 										 };
+
+static char* const first_col[] = {
+											  "Profits", "", "Work", "Gifts", "Other", "",
+											  "Expenses", "", "Food", "Gas", "Hair Cuts", "Clothing", "Personal", "Hobby", "Other"	
+											};
+
 /* Functions */
-int  get_year(void);
-int  load_config(page *page_p, dimensions sdims, char *year);
-int  create_config(page *page_p, dimensions sdims, char *year);
-int  create_def_config(dimensions sdims);
-bool check_existing(char *year);
+int  create_def_config(dimensions *dims);
+int  create_config(dimensions *dims, char *year);
+int  load_config(page *page_p, dimensions *dims, char *year);
+int  page_init(page *page_p, dimensions *dims);
+int  page_cleanup(page *page_p);
+void print_onscr_conf(page pg, dimensions *dims);
+void redraw(page pg, dimensions *dims, char *year);
+bool check_existing(char *fname);
 
 #endif

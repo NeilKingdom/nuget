@@ -20,8 +20,7 @@
  * 
  * @returns dimensions* Screen dimensions struct
 */
-void init_nuget_ui(void) {
-	dimensions sdims;
+void init_nuget_ui(dimensions *sdims) {
 	WINDOW *content_win;
 	page layout;
 	char *year = NULL;
@@ -41,32 +40,29 @@ void init_nuget_ui(void) {
 	keypad(stdscr, TRUE);
 	raw(); /* Take raw input from user ie. interpret special chars as raw bytes */
 	noecho(); /* Hide user input on stdscr */
-	calc_cell_dimensions(&sdims); /* Calculate the size of each cell */
+	calc_cell_dimensions(sdims); /* Calculate the size of each cell */
 
 	/* Color pairs */
 	start_color();
 	assume_default_colors(COLOR_WHITE, -1); /* Keeps attributes from terminal such as transparency on */
 	attrset(COLOR_PAIR(COL_PAIR2));  		 /* Apply color pair the the entire window (stdwin is assumed) */
 
-	/* Print year */
+	/* Get current year */
 	year = malloc(sizeof(char) * (4 + 1));
 	if((nuget_itoa(get_year(), year, 10, 4)) == NUGET_ERR) {
-		fprintf(stderr, "Error: Passed uninitialized string to nuget_itoa\n");
-		fprintf(stderr, "Traceback - File: %s, Function: %s, Line: %d\n", __FILE__, __FUNCTION__, __LINE__);
+		nuget_perror(__FILE__, __FUNCTION__, __LINE__);
 		year = "ERROR";
 	}
-	mvprintw(0, (sdims.win_width/2) - (strlen(year)/2), year);
 
 	/* Load config data */
-	create_def_config(sdims); /* TODO: Temporary */
-	/*load_config(&layout, sdims, year);
+	load_config(&layout, sdims, year);
 	#ifdef DEBUG
-	print_config();
+	print_onscr_conf(layout, sdims);
 	#endif
-	redraw(&layout, sdims);*/
+	redraw(layout, sdims, year);
 	
 	/* Initialize the content window */
-	content_win = create_win(CWIN_HEIGHT * sdims.cell_height, sdims.win_width, sdims.win_height, 0);
+	content_win = create_win(CWIN_HEIGHT * sdims->cell_height, sdims->win_width, sdims->win_height, 0);
 	mvwprintw(content_win, 0, 0, "Testing the new window...");
 
 	refresh();
@@ -95,6 +91,7 @@ void *sdims_watchdog(void *args) {
 	return NULL;
 }
 
+/* TODO: Fix returning value defined on stack */
 WINDOW *create_win(int height, int width, int starty, int startx) {
 	WINDOW *win;
 	win = newwin(height, width, starty, startx);
