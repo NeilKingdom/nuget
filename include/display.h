@@ -26,8 +26,10 @@
 #include <ncurses.h>
 
 #define DEF_ONSCR_COLS 10
-/* Don't need DEF_ONSCR_ROWS;
-   We let screen size determine the number of rows */
+/* 
+   Don't need DEF_ONSCR_ROWS since we let the screen
+   determine the number of rows
+*/
 #define MAX_ONSCR_COLS 20 
 #define MAX_ONSCR_ROWS 80
 #define MAX_OFSCR_COLS 50		  

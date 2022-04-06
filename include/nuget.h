@@ -3,6 +3,7 @@
 
 #define NUGET_ERR (-1)
 
+/* TODO: Change to VK codes (regular ascii codes are just the letters) */
 #define K_SHIFT
 #define K_CURSOR_UP  	'k'
 #define K_CURSOR_DOWN 	'j'
@@ -12,4 +13,4 @@
 #define K_SAVE 			's'
 #define K_QUIT 			'q'
 
-#endif
+#endif /* NUGET_H */

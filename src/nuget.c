@@ -10,12 +10,19 @@
 #include "nuget.h"
 #include "display.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) 
+{
 	char c;
-	int tb, rb, bb, lb; 							 /* Boundaries: [top, right, bottom, left] */
+   /* TODO: implement */
+	/* int tb, rb, bb, lb;  Boundaries: [top, right, bottom, left] */
 	unsigned x, y, cell_width, cell_height;
 	WINDOW *content_win = NULL;
 	dimensions sdims;
+
+   /* 
+      TODO: Start thread which checks for changes to sdims->num_onscr_cols/rows
+            (delay(100) and then updates the fields and calls redraw() appropriately 
+   */
 
 	init_nuget_ui(&sdims);
 	cell_width  = sdims.cell_width;
@@ -30,8 +37,10 @@ int main(int argc, char *argv[]) {
 	mvchgat(y, x, cell_width, A_BOLD, 2, NULL);
 	refresh();
 
-	while((c = getch()) != K_QUIT) {
-		switch(c) {
+	while((c = getch()) != K_QUIT) 
+   {
+		switch(c) 
+      {
 			case K_ENTER:
 				;;
 				break;
