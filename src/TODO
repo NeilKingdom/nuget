@@ -6,3 +6,5 @@ col = column of the page
 row = row of the page
 
 - Add a testing framework
+
+- Check if it's safe to remove deps folder
