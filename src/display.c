@@ -13,9 +13,8 @@
 #include <time.h>
 
 #include "misc.h"
-#include "display.h"
+#include "common.h"
 #include "nuget.h"
-#include "fileio.h"
 
 uint8_t cell_size;
 WINDOW *content_win;
@@ -24,9 +23,8 @@ WINDOW *content_win;
  * 
  * @returns dimensions* Screen dimensions struct
 */
-void init_nuget_ui(dimensions *sdims) 
+void init_nuget_ui(dimensions *sdims_p, page *page_p) 
 {
-	page layout;
 	char *year = NULL;
 
 	/* TODO: Change to check for parameter eg. -n = no color */
@@ -43,12 +41,12 @@ void init_nuget_ui(dimensions *sdims)
    #endif
 
 	/* Initialization */
-	initscr();                   /* Start in curses mode */
+	initscr();                     /* Start in curses mode */
 	curs_set(INVISIBLE);
 	keypad(stdscr, TRUE);
-	raw();                       /* Take raw input from user ie. interpret special chars as raw bytes */
-	noecho();                    /* Hide user input on stdscr */
-	calc_cell_dimensions(sdims); /* Calculate the size of each cell */
+	raw();                         /* Take raw input from user ie. interpret special chars as raw bytes */
+	noecho();                      /* Hide user input on stdscr */
+	calc_cell_dimensions(sdims_p); /* Calculate the size of each cell */
 
 	/* Color pairs */
 	start_color();
@@ -73,11 +71,11 @@ void init_nuget_ui(dimensions *sdims)
    }
 
 	/* Load config data */
-	load_config(&layout, year);
-	redraw(layout, sdims, year);
+	load_config(page_p, year);
+	redraw(page_p, sdims_p, year);
 	
 	/* Initialize the content window */
-	create_win(content_win, CWIN_HEIGHT * sdims->cell_height, sdims->win_width, sdims->win_height, 0);
+	create_win(content_win, CWIN_HEIGHT * sdims_p->cell_height, sdims_p->win_width, sdims_p->win_height, 0);
 
 	free(year);
 	refresh();
@@ -124,7 +122,7 @@ void *sdims_watchdog(void *args)
       if (onscr_rows_save != sdims_p->onscr_rows ||
           onscr_cols_save != sdims_p->onscr_cols)
       {
-	      redraw(layout, sdims, year);
+	      redraw(page_p, sdims_p, year);
       }
       
       /* Finished R/W ops : Safe to unlock */

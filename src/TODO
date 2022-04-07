@@ -6,3 +6,5 @@ col = column of the page
 row = row of the page
 
 - Add a testing framework
+
+- Rename page to page_t and dimensions to dimensions_t

@@ -14,7 +14,7 @@
 #include <assert.h>
 #include <sys/stat.h>
 
-#include "fileio.h"
+#include "common.h"
 #include "nuget.h"
 #include "misc.h"
 
@@ -121,9 +121,9 @@ int create_def_config(void)
       {
 			fwrite(def_layout.page_cells[0][i], strlen(def_layout.page_cells[0][i]), 1, fp);
       }
+      fputc('\n', fp);
 	}
 
-   fputc('\n', fp);
 	fputc('\t', fp);
 	fputc('\t', fp);
 	fwrite(COL_END, strlen(COL_END), 1, fp);
@@ -153,6 +153,7 @@ int create_def_config(void)
 		fputc('\n', fp);
 	}
 	fwrite(PG_END, strlen(PG_END), 1, fp);
+   fputc('\n', fp);
 	fputc(EOF, fp);
 
    /* Data has now been loaded into config file, so free allocated memory */
@@ -164,9 +165,9 @@ int create_def_config(void)
 }
 
 /* TODO: implement */
-int create_config(dimensions *dims, char *year) 
+int create_config(dimensions *dims_p, char *year) 
 {
-	printf("I dont do anything yet %s %ld", year, dims->onscr_cols);
+	printf("I dont do anything yet %s %ld", year, dims_p->onscr_cols);
 	return 0;
 }
 
@@ -304,7 +305,7 @@ int page_init(page *page_p)
 	return 0;
 }
 
-void redraw(page pg, dimensions *dims, char *year) 
+void redraw(page *page_p, dimensions *dims_p, char *year) 
 {
    char c;
    const char* elipses = "...";
@@ -313,24 +314,24 @@ void redraw(page pg, dimensions *dims, char *year)
    /* TODO: Should either store or calculate this */
    const size_t h = 2; /* The gap before rows begin */
 
-	cell_width  = dims->cell_width;
-	cell_height = dims->cell_height;
+	cell_width  = dims_p->cell_width;
+	cell_height = dims_p->cell_height;
 
 	/* TODO: Clear content window as well */
 	clear();
 
 	/* Print year */
-	mvprintw(0, (dims->win_width/2) - (strlen(year)/2), year);
+	mvprintw(0, (dims_p->win_width/2) - (strlen(year)/2), year);
 
    /* Print data contents of cells */
-   for (x = 0, col = pg.col_offset; x < dims->onscr_cols; x += cell_width, col++) 
+   for (x = 0, col = page_p->col_offset; x < dims_p->onscr_cols; x += cell_width, col++) 
    {
-      for (y = (cell_height * (int)h), row = pg.row_offset; y < (dims->onscr_rows - h); y += cell_height, row++) 
+      for (y = (cell_height * (int)h), row = page_p->row_offset; y < (dims_p->onscr_rows - h); y += cell_height, row++) 
       {
          i = 0;
 			while (i < cell_size - strlen(elipses)) 
          {
-            if ((c = *(pg.page_cells[x][y] + i)) == (char)0)
+            if ((c = *(page_p->page_cells[x][y] + i)) == (char)0)
                break;
             mvaddch(y, x + i, c);
 				i++;
@@ -342,11 +343,11 @@ void redraw(page pg, dimensions *dims, char *year)
 	/* Apply attributes */
 
 	/* First column attrs */
-	for (x = pg.row_offset, y = pg.row_offset + (cell_height * h); y < dims->onscr_rows; y += cell_height) 
+	for (x = page_p->row_offset, y = page_p->row_offset + (cell_height * h); y < dims_p->onscr_rows; y += cell_height) 
 		mvchgat(y, x, cell_width, A_BOLD, 2, NULL);	
 
 	/* Top row attrs*/
-	for (x = pg.row_offset + cell_width, y = cell_height; x < dims->onscr_cols; x += cell_width) 
+	for (x = page_p->row_offset + cell_width, y = cell_height; x < dims_p->onscr_cols; x += cell_width) 
 		mvchgat(y, x, cell_width, A_BOLD, 2, NULL);	
 
 	refresh();

@@ -19,7 +19,6 @@
  *           |																					 | 
  *				  --------------------------------------------------------------
 */
-
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
@@ -40,7 +39,7 @@
 #define COL_PAIR1 init_pair(1, COLOR_BLACK, (-1))
 #define COL_PAIR2 init_pair(2, COLOR_BLACK, COLOR_CYAN)
 
-typedef struct {
+typedef struct dimensions {
 	int 		cell_width;  /* Width of each cell    */
 	int 		cell_height; /* Height of each cell   */
 	float 	win_width;	 /* Width of stdscr       */
@@ -51,11 +50,5 @@ typedef struct {
 
 extern WINDOW *content_win;
 enum cursorMode { INVISIBLE, NORMAL, BLINKING };
-
-/* Functions */
-void init_nuget_ui(dimensions *dims_p);
-void calc_cell_dimensions(dimensions *dims_p);
-void create_win(WINDOW *win, int height, int width, int starty, int startx);
-void *sdims_watchdog(void *args);
 
 #endif

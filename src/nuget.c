@@ -13,8 +13,7 @@
 
 #include "nuget.h"
 #include "misc.h"
-#include "display.h"
-#include "fileio.h"
+#include "common.h"
 
 int main(int argc, char *argv[]) 
 {
@@ -23,6 +22,7 @@ int main(int argc, char *argv[])
 	unsigned rb, bb, lb = 0, tb = 0;  /* Boundaries: [Right, Bottom, Left, Top] */
 	unsigned x, y, cell_width, cell_height;
 	WINDOW *content_win = NULL;
+   page layout;
 	dimensions sdims;
 
    #if 0
@@ -36,8 +36,8 @@ int main(int argc, char *argv[])
    } 
    #endif
 
-	init_nuget_ui(&sdims);
-   uint8_t cell_size = (uint8_t)(sdims.cell_width - 2);
+	init_nuget_ui(&sdims, &layout);
+   cell_size         = (uint8_t)(sdims.cell_width - 2);
 	cell_width        = sdims.cell_width;
 	cell_height       = sdims.cell_height;
    rb                = sdims.onscr_cols * cell_width;

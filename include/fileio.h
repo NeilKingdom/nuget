@@ -3,7 +3,6 @@
  * The columns are a collection of cells
  * Each cell contains a string, but can only display a limited number of characters
 */
-
 #ifndef FILEIO_H
 #define FILEIO_H
 
@@ -24,13 +23,13 @@
 #define NUL_ENTRY	' '
 #define PATH_LIM  256
 
-typedef char*  cell_data; 
+typedef char*  cell_data_t; 
 extern uint8_t cell_size;
 
-typedef struct {
+typedef struct { 
 	uint16_t    col_offset;                                 /* Column offset of the offscreen page for drawing onscreen cells */
 	uint16_t    row_offset;                                 /* Row offset of the offscreen page for drawing onscreen cells */
-	cell_data   page_cells[MAX_OFSCR_COLS][MAX_OFSCR_ROWS]; /* The entire offscreen page of cells loaded from conf file */
+	cell_data_t page_cells[MAX_OFSCR_COLS][MAX_OFSCR_ROWS]; /* The entire offscreen page of cells loaded from conf file */
 } page;
 
 static char* const top_row[] = { 
@@ -46,14 +45,5 @@ static char* const first_col[] = {
    "Profits", "", "Work", "Gifts", "Other", "",
    "Expenses", "", "Food", "Gas", "Hair Cuts", "Clothing", "Personal", "Hobby", "Other"	
 };
-
-/* Functions */
-int  create_def_config(void);
-int  create_config(dimensions *dims, char *year);
-int  load_config(page *page_p, char *year);
-int  page_init(page *page_p);
-int  page_cleanup(page *page_p);
-void redraw(page pg, dimensions *dims, char *year);
-bool check_existing(char *fname);
 
 #endif /* FILEIO_H */
