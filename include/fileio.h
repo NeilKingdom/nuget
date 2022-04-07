@@ -21,18 +21,16 @@
 #define PG_END	  	"[Page End]"
 #define COL_START "[Col Start]"
 #define COL_END	"[Col End]"
-#define NUL_ENTRY	'0'
+#define NUL_ENTRY	' '
 #define PATH_LIM  256
 
-typedef struct {
-	size_t size;  /* TODO: if this is strlen or col_width, I don't see why it's necessary */
-	char	 *data;
-} cell;
+typedef char*  cell_data; 
+extern uint8_t cell_size;
 
 typedef struct {
-	uint16_t col_offset;
-	uint16_t row_offset;
-	cell	 	page_cells[MAX_OFSCR_COLS][MAX_OFSCR_ROWS];
+	uint16_t    col_offset;                                 /* Column offset of the offscreen page for drawing onscreen cells */
+	uint16_t    row_offset;                                 /* Row offset of the offscreen page for drawing onscreen cells */
+	cell_data   page_cells[MAX_OFSCR_COLS][MAX_OFSCR_ROWS]; /* The entire offscreen page of cells loaded from conf file */
 } page;
 
 static char* const top_row[] = { 
@@ -52,10 +50,9 @@ static char* const first_col[] = {
 /* Functions */
 int  create_def_config(void);
 int  create_config(dimensions *dims, char *year);
-int  load_config(page *page_p, dimensions *dims, char *year);
-int  page_init(page *page_p, dimensions *dims);
+int  load_config(page *page_p, char *year);
+int  page_init(page *page_p);
 int  page_cleanup(page *page_p);
-void print_onscr_conf_debug(page pg, dimensions *dims);
 void redraw(page pg, dimensions *dims, char *year);
 bool check_existing(char *fname);
 

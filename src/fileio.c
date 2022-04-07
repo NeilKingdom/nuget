@@ -56,13 +56,16 @@ int create_def_config(void)
 		return NUGET_ERR;
 	}
 
-	/* Allocate Memory (could use page_init(), but we only need to allocate top row and first column) */
+	/**** Allocate Memory (could use page_init(), but we only need to allocate top row and first column) ****/
+
+   /* first_col size and DEF_COLS should match */
+   assert(sizeof(first_col) == sizeof(char*) * DEF_ROWS);
 
  	/* First column */
 	for (i = 0; i < DEF_ROWS; i++) 
    {
-		def_layout.page_cells[0][i].data = calloc(1, sizeof(char) * (MAX_DATA + 1));
-		if (def_layout.page_cells[0][i].data == NULL) 
+		def_layout.page_cells[0][i] = calloc(1, sizeof(char) * (MAX_DATA + 1));
+		if (def_layout.page_cells[0][i] == NULL) 
       {
 			fprintf(stderr, "Error: Could not allocate memory for cell data: %s", strerror(errno));
 			nuget_perror(__FILE__, __FUNCTION__, __LINE__);
@@ -71,11 +74,15 @@ int create_def_config(void)
 			return NUGET_ERR;
 		}
 	}
+
+   /* top_row size and DEF_ROWS should match */
+   assert(sizeof(top_row) == sizeof(char*) * (DEF_COLS - 1));
+
 	/* Top row */
 	for (i = 1; i < DEF_COLS; i++) 
    {
-		def_layout.page_cells[i][0].data = calloc(1, sizeof(char) * (MAX_DATA + 1));
-		if (def_layout.page_cells[i][0].data == NULL) 
+		def_layout.page_cells[i][0] = calloc(1, sizeof(char) * (MAX_DATA + 1));
+		if (def_layout.page_cells[i][0] == NULL) 
       {
 			fprintf(stderr, "Error: Could not allocate memory for cell data: %s", strerror(errno));
 			nuget_perror(__FILE__, __FUNCTION__, __LINE__);
@@ -88,12 +95,12 @@ int create_def_config(void)
 	/* Define first column data */
    first_col_size = sizeof(first_col) / sizeof(first_col[0]);
    for (i = 0; i < first_col_size; i++)
-	   strcpy(def_layout.page_cells[0][i].data , first_col[i]);
+	   strcpy(def_layout.page_cells[0][i] , first_col[i]);
    
 	/* Define top row data */
    top_row_size = (sizeof(top_row) / sizeof(top_row[0]));
    for (i = 1; i < top_row_size; i++)  
-	   strcpy(def_layout.page_cells[i][0].data , top_row[i-1]);
+	   strcpy(def_layout.page_cells[i][0] , top_row[i-1]);
 
 	/* Write first column to default.conf */
 	fwrite(PG_START, strlen(PG_START), 1, fp);
@@ -106,17 +113,14 @@ int create_def_config(void)
 
 	for (i = 0; i < DEF_ROWS; i++) 
    {
-		if (def_layout.page_cells[0][i].data == 0) 
+		if (def_layout.page_cells[0][i] == 0) 
       {
 			fputc(NUL_ENTRY, fp);
-         fputc(' ', fp);
       }
 		else
       {
-			fwrite(def_layout.page_cells[0][i].data, strlen(def_layout.page_cells[0][i].data), 1, fp);
+			fwrite(def_layout.page_cells[0][i], strlen(def_layout.page_cells[0][i]), 1, fp);
       }
-
-      fputc(' ', fp);
 	}
 
    fputc('\n', fp);
@@ -134,14 +138,13 @@ int create_def_config(void)
 		fputc('\t', fp);
 		fputc('\t', fp);
 
-		if (def_layout.page_cells[i][0].data == 0)
+		if (def_layout.page_cells[i][0] == 0)
       {
 			fputc(NUL_ENTRY, fp);
-         fputc(' ', fp);
       }
 		else
       {
-			fwrite(def_layout.page_cells[i][0].data, strlen(def_layout.page_cells[i][0].data), 1, fp);
+			fwrite(def_layout.page_cells[i][0], strlen(def_layout.page_cells[i][0]), 1, fp);
       }
 
 		fputc('\n', fp);
@@ -160,18 +163,18 @@ int create_def_config(void)
 	return 0;
 }
 
+/* TODO: implement */
 int create_config(dimensions *dims, char *year) 
 {
 	printf("I dont do anything yet %s %ld", year, dims->onscr_cols);
 	return 0;
 }
 
-int load_config(page *page_p, dimensions *dims, char *year) 
+int load_config(page *page_p, char *year) 
 {
 	unsigned x = 0, y = 0;
 	int pos, err, c;
 	FILE *fp = NULL;
-   char *token = NULL;
 	char fpath[PATH_LIM] = { 0 };
 	char line[MAX_DATA];
 
@@ -202,7 +205,7 @@ int load_config(page *page_p, dimensions *dims, char *year)
 		return NUGET_ERR;
 	}
 
-	err = page_init(page_p, dims);
+	err = page_init(page_p);
 	if (NUGET_ERR == err) 
    {
 		fprintf(stderr, "Error: Page failed to initialize\n");
@@ -235,32 +238,29 @@ int load_config(page *page_p, dimensions *dims, char *year)
 	
       /* Reading text */
 		fgets(line, MAX_DATA, fp);
-      token = strtok(line, " ");
-		
-		if (strcmp(token, PG_START) == 0) 
+      /* Replace newline feed with nul terminator */
+      line[strcspn(line, "\n")] = '\0'; 
+
+		if (strcmp(line, PG_START) == 0) 
       {
 			x = 0, y = 0;
 		}	
-		else if (strcmp(token, COL_START) == 0) 
+		else if (strcmp(line, COL_START) == 0) 
       {
 			y = 0;	
 		}
-		else if (strcmp(token, COL_END) == 0) 
+		else if (strcmp(line, COL_END) == 0) 
       {
 			x++;
 		}
-		else if (strcmp(token, PG_END) == 0) 
+		else if (strcmp(line, PG_END) == 0) 
       {
 			break;
 		}
 		/* Data */
 		else {
-         while (token != NULL)
-         {
-            strcpy(page_p->page_cells[x][y].data, token);
-            token = strtok(NULL, " ");
-            y++;
-         }
+         strncpy(page_p->page_cells[x][y], line, cell_size);
+         y++;
       }
    }
 	fclose(fp);
@@ -282,7 +282,7 @@ bool check_existing(char *fname)
        return false;
 }
 
-int page_init(page *page_p, dimensions *dims) 
+int page_init(page *page_p) 
 {
 	int x, y;	
 
@@ -291,14 +291,13 @@ int page_init(page *page_p, dimensions *dims)
 
 	for (x = 0; x < MAX_OFSCR_COLS; x++) {
 		for (y = 0; y < MAX_OFSCR_ROWS; y++) {
-			page_p->page_cells[x][y].data = calloc(1, sizeof(char) * (MAX_DATA + 1));
-			if (page_p->page_cells[x][y].data == NULL) {
+			page_p->page_cells[x][y] = calloc(1, sizeof(char) * (MAX_DATA + 1));
+			if (page_p->page_cells[x][y] == NULL) {
 				fprintf(stderr, "Error: Could not allocate memory for cell data: %s", strerror(errno));
 				nuget_perror(__FILE__, __FUNCTION__, __LINE__);
 				page_cleanup(page_p);
 				return NUGET_ERR;
 			}
-			page_p->page_cells[x][y].size = dims->cell_width;
 		}
 	}
 	
@@ -329,9 +328,9 @@ void redraw(page pg, dimensions *dims, char *year)
       for (y = (cell_height * (int)h), row = pg.row_offset; y < (dims->onscr_rows - h); y += cell_height, row++) 
       {
          i = 0;
-			while (i < MAX_DATA - strlen(elipses)) 
+			while (i < cell_size - strlen(elipses)) 
          {
-            if ((c = pg.page_cells[x][y].data[i]) == '\0')
+            if ((c = *(pg.page_cells[x][y] + i)) == (char)0)
                break;
             mvaddch(y, x + i, c);
 				i++;
@@ -360,36 +359,12 @@ int page_cleanup(page *page_p)
    {
 		for (y = 0; y < MAX_OFSCR_ROWS; y++) 
       {
-			if (!page_p->page_cells[x][y].data) 
+			if (!page_p->page_cells[x][y]) 
          {
-				free(page_p->page_cells[x][y].data);
+				free(page_p->page_cells[x][y]);
 			}
 		}
 	}
 
 	return 0;
 }
-
-void print_onscr_conf_debug(page pg, dimensions *dims) 
-{
-	char c;
-	const char* elipses = "...";
-	size_t x, y, i;
-
-	for (x = 0; x < dims->onscr_cols; x++) 
-   {
-		for (y = 0; y < dims->onscr_rows; y++) 
-      {
-			i = 0;
-			while (i < MAX_DATA - strlen(elipses)) 
-         {
-            c = pg.page_cells[x][y].data[i];
-				putchar(c);
-				i++;
-			}	
-			printf("%s", elipses);
-		}
-		putchar('\n');
-	}
-}
-

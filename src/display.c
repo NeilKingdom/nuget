@@ -10,12 +10,15 @@
 #include <string.h>
 #include <math.h>
 #include <errno.h>
+#include <time.h>
 
 #include "misc.h"
 #include "display.h"
 #include "nuget.h"
 #include "fileio.h"
 
+uint8_t cell_size;
+WINDOW *content_win;
 /**
  * Briefing: Initialize the GUI and other data
  * 
@@ -23,7 +26,6 @@
 */
 void init_nuget_ui(dimensions *sdims) 
 {
-	WINDOW *content_win;
 	page layout;
 	char *year = NULL;
 
@@ -71,18 +73,14 @@ void init_nuget_ui(dimensions *sdims)
    }
 
 	/* Load config data */
-	load_config(&layout, sdims, year);
-	#ifdef DEBUG
-	print_onscr_conf_debug(layout, sdims);
-	#endif
+	load_config(&layout, year);
 	redraw(layout, sdims, year);
 	
 	/* Initialize the content window */
-	content_win = create_win(CWIN_HEIGHT * sdims->cell_height, sdims->win_width, sdims->win_height, 0);
-	mvwprintw(content_win, 0, 0, "Testing the new window...");
+	create_win(content_win, CWIN_HEIGHT * sdims->cell_height, sdims->win_width, sdims->win_height, 0);
 
-	refresh();
 	free(year);
+	refresh();
 }
 
 /**
@@ -92,7 +90,6 @@ void init_nuget_ui(dimensions *sdims)
 */
 void calc_cell_dimensions(dimensions *sdims_p) 
 {
-	/* getmaxyx is a macro so apply caution when passing arguments */
 	getmaxyx(stdscr, (sdims_p->win_height), (sdims_p->win_width)); 
 	sdims_p->win_height -= CWIN_HEIGHT; 										 /* Subtract CWIN_HEIGHT to make room for content window */
 
@@ -101,21 +98,44 @@ void calc_cell_dimensions(dimensions *sdims_p)
 
 	sdims_p->onscr_rows  = sdims_p->win_height / sdims_p->cell_height;
 	sdims_p->onscr_cols  = sdims_p->win_width / sdims_p->cell_width;  
+
+   /* Arbitrary subtraction of 2 to leave breathing room between cells */
+   cell_size = (uint8_t)(sdims_p->cell_width - 2);
 }
 
 void *sdims_watchdog(void *args) 
 {
-	printf("I don't do anything yet %s", (char *)args);	
-   return NULL;
+   struct timespec delay;
+   delay.tv_nsec = 100000000; /* 100ms */
+   for (;;)
+   {
+      nanosleep(&delay, NULL);
+
+      /* TODO: Implement */
+      #if 0
+      /* R/W ops : Lock mutex */
+      pthread_mutex_lock(&mutex)       
+
+      int onscr_rows_save = sdims_p->onscr_rows;
+      int onscr_cols_save = sdims_p->onscr_cols;
+
+      calc_cell_dimensions(sdims_p);
+      
+      if (onscr_rows_save != sdims_p->onscr_rows ||
+          onscr_cols_save != sdims_p->onscr_cols)
+      {
+	      redraw(layout, sdims, year);
+      }
+      
+      /* Finished R/W ops : Safe to unlock */
+      pthread_mutex_unlock(&mutex);
+      #endif
+   }
 }
 
-/* TODO: Fix returning value defined on stack */
-WINDOW *create_win(int height, int width, int starty, int startx) 
+void create_win(WINDOW *win, int height, int width, int starty, int startx) 
 {
-	WINDOW *win;
 	win = newwin(height, width, starty, startx);
 	box(win, 0, 0); /* Border */
 	wrefresh(win);
-
-	return win;
 }
