@@ -21,9 +21,8 @@ WINDOW *content_win;
 /**
  * Briefing: Initialize the GUI and other data
  * 
- * @returns dimensions* Screen dimensions struct
 */
-void init_nuget_ui(dimensions *sdims_p, page *page_p) 
+void init_nuget_ui(dimensions_t *dims_p, page_t *page_p) 
 {
 	char *year = NULL;
 
@@ -46,7 +45,7 @@ void init_nuget_ui(dimensions *sdims_p, page *page_p)
 	keypad(stdscr, TRUE);
 	raw();                         /* Take raw input from user ie. interpret special chars as raw bytes */
 	noecho();                      /* Hide user input on stdscr */
-	calc_cell_dimensions(sdims_p); /* Calculate the size of each cell */
+	calc_cell_dimensions(dims_p); /* Calculate the size of each cell */
 
 	/* Color pairs */
 	start_color();
@@ -72,10 +71,10 @@ void init_nuget_ui(dimensions *sdims_p, page *page_p)
 
 	/* Load config data */
 	load_config(page_p, year);
-	redraw(page_p, sdims_p, year);
+	redraw(page_p, dims_p, year);
 	
 	/* Initialize the content window */
-	create_win(content_win, CWIN_HEIGHT * sdims_p->cell_height, sdims_p->win_width, sdims_p->win_height, 0);
+	create_win(content_win, CWIN_HEIGHT * dims_p->cell_height, dims_p->win_width, dims_p->win_height, 0);
 
 	free(year);
 	refresh();
@@ -84,21 +83,21 @@ void init_nuget_ui(dimensions *sdims_p, page *page_p)
 /**
  * Briefing: Calculate the screen and cell width/height
  * 
- * @param sdims_p Pointer to screen dimensions struct
+ * @param dims_p Pointer to screen dimensions_t struct
 */
-void calc_cell_dimensions(dimensions *sdims_p) 
+void calc_cell_dimensions(dimensions_t *dims_p) 
 {
-	getmaxyx(stdscr, (sdims_p->win_height), (sdims_p->win_width)); 
-	sdims_p->win_height -= CWIN_HEIGHT; 										 /* Subtract CWIN_HEIGHT to make room for content window */
+	getmaxyx(stdscr, (dims_p->win_height), (dims_p->win_width)); 
+	dims_p->win_height -= CWIN_HEIGHT; 										 /* Subtract CWIN_HEIGHT to make room for content window */
 
-	sdims_p->cell_height = 1;   						                      /* Rows can take up all of the available space */
-	sdims_p->cell_width  = floor(sdims_p->win_width / DEF_ONSCR_COLS); /* Divide rows into reasonably sized sections  */
+	dims_p->cell_height = 1;   						                      /* Rows can take up all of the available space */
+	dims_p->cell_width  = floor(dims_p->win_width / DEF_ONSCR_COLS); /* Divide rows into reasonably sized sections  */
 
-	sdims_p->onscr_rows  = sdims_p->win_height / sdims_p->cell_height;
-	sdims_p->onscr_cols  = sdims_p->win_width / sdims_p->cell_width;  
+	dims_p->onscr_rows  = dims_p->win_height / dims_p->cell_height;
+	dims_p->onscr_cols  = dims_p->win_width / dims_p->cell_width;  
 
    /* Arbitrary subtraction of 2 to leave breathing room between cells */
-   cell_size = (uint8_t)(sdims_p->cell_width - 2);
+   cell_size = (uint8_t)(dims_p->cell_width - 2);
 }
 
 void *sdims_watchdog(void *args) 
@@ -114,15 +113,15 @@ void *sdims_watchdog(void *args)
       /* R/W ops : Lock mutex */
       pthread_mutex_lock(&mutex)       
 
-      int onscr_rows_save = sdims_p->onscr_rows;
-      int onscr_cols_save = sdims_p->onscr_cols;
+      int onscr_rows_save = dims_p->onscr_rows;
+      int onscr_cols_save = dims_p->onscr_cols;
 
-      calc_cell_dimensions(sdims_p);
+      calc_cell_dimensions(dims_p);
       
-      if (onscr_rows_save != sdims_p->onscr_rows ||
-          onscr_cols_save != sdims_p->onscr_cols)
+      if (onscr_rows_save != dims_p->onscr_rows ||
+          onscr_cols_save != dims_p->onscr_cols)
       {
-	      redraw(page_p, sdims_p, year);
+	      redraw(page_p, dims_p, year);
       }
       
       /* Finished R/W ops : Safe to unlock */

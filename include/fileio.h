@@ -20,7 +20,7 @@
 #define PG_END	  	"[Page End]"
 #define COL_START "[Col Start]"
 #define COL_END	"[Col End]"
-#define NUL_ENTRY	' '
+#define NUL_ENTRY	" "
 #define PATH_LIM  256
 
 typedef char*  cell_data_t; 
@@ -30,9 +30,9 @@ typedef struct {
 	uint16_t    col_offset;                                 /* Column offset of the offscreen page for drawing onscreen cells */
 	uint16_t    row_offset;                                 /* Row offset of the offscreen page for drawing onscreen cells */
 	cell_data_t page_cells[MAX_OFSCR_COLS][MAX_OFSCR_ROWS]; /* The entire offscreen page of cells loaded from conf file */
-} page;
+} page_t;
 
-static char* const top_row[] = { 
+static char* const top_row[DEF_COLS] = { 
    "Jan Est", "Jan Act", "Feb Est", "Feb Act",
    "Mar Est", "Mar Act", "Apr Est", "Apr Act",
    "May Est", "May Act", "Jun Est", "Jun Act",
@@ -41,7 +41,7 @@ static char* const top_row[] = {
    "Nov Est", "Nov Act", "Dec Est", "Dec Act",
 };
 
-static char* const first_col[] = {
+static char* const first_col[DEF_ROWS] = {
    "Profits", "", "Work", "Gifts", "Other", "",
    "Expenses", "", "Food", "Gas", "Hair Cuts", "Clothing", "Personal", "Hobby", "Other"	
 };

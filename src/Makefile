@@ -9,7 +9,7 @@ ODIR = $(PROJ_DIR)/obj
 OBJ = $(patsubst %.c, $(ODIR)/%.o, $(SRC))
 
 CC = gcc
-DEBUG = -g #-Werror -DDEBUG
+DEBUG = -g -DDEBUG #-Werror 
 IDIR = -I$(DDIR)
 CFLAGS += $(DEBUG) -DTEMP_DIR=\"$(PROJ_DIR)/tmp/\" -Wall -Wextra -O2
 LDFLAGS += -lncurses -lm -lc

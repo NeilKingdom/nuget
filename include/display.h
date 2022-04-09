@@ -34,6 +34,8 @@
 #define MAX_OFSCR_COLS 50		  
 #define MAX_OFSCR_ROWS 150		  
 #define CWIN_HEIGHT    5
+#define FIRST_COL_GAP  1
+#define TOP_ROW_GAP    2
 
 /* -1 means no color, therefore, the background color wont exist with this attribute */
 #define COL_PAIR1 init_pair(1, COLOR_BLACK, (-1))
@@ -46,7 +48,7 @@ typedef struct dimensions {
 	float 	win_height;  /* Height of stdscr      */
 	size_t 	onscr_rows;  /* Num of on-screen rows */
 	size_t	onscr_cols;  /* Num of on-screen cols */
-} dimensions;
+} dimensions_t;
 
 extern WINDOW *content_win;
 enum cursorMode { INVISIBLE, NORMAL, BLINKING };

@@ -41,7 +41,7 @@ int create_def_config(void)
 	FILE *fp = NULL;		
    /* Path character limit */
 	char fpath[PATH_LIM] = { 0 };
-	page def_layout;
+	page_t def_layout = { 0 };
 
 	strcat(fpath, TEMP_DIR);
 	strcat(fpath, DEF_CONF);
@@ -56,15 +56,12 @@ int create_def_config(void)
 		return NUGET_ERR;
 	}
 
-	/**** Allocate Memory (could use page_init(), but we only need to allocate top row and first column) ****/
-
-   /* first_col size and DEF_COLS should match */
-   assert(sizeof(first_col) == sizeof(char*) * DEF_ROWS);
+	/* Allocate Memory (could use page_init(), but we only need to allocate top row and first column) */
 
  	/* First column */
 	for (i = 0; i < DEF_ROWS; i++) 
    {
-		def_layout.page_cells[0][i] = calloc(1, sizeof(char) * (MAX_DATA + 1));
+		def_layout.page_cells[0][i] = calloc(1, sizeof(char) * MAX_DATA);
 		if (def_layout.page_cells[0][i] == NULL) 
       {
 			fprintf(stderr, "Error: Could not allocate memory for cell data: %s", strerror(errno));
@@ -75,13 +72,10 @@ int create_def_config(void)
 		}
 	}
 
-   /* top_row size and DEF_ROWS should match */
-   assert(sizeof(top_row) == sizeof(char*) * (DEF_COLS - 1));
-
 	/* Top row */
 	for (i = 1; i < DEF_COLS; i++) 
    {
-		def_layout.page_cells[i][0] = calloc(1, sizeof(char) * (MAX_DATA + 1));
+		def_layout.page_cells[i][0] = calloc(1, sizeof(char) * MAX_DATA);
 		if (def_layout.page_cells[i][0] == NULL) 
       {
 			fprintf(stderr, "Error: Could not allocate memory for cell data: %s", strerror(errno));
@@ -95,52 +89,53 @@ int create_def_config(void)
 	/* Define first column data */
    first_col_size = sizeof(first_col) / sizeof(first_col[0]);
    for (i = 0; i < first_col_size; i++)
-	   strcpy(def_layout.page_cells[0][i] , first_col[i]);
+	   strcpy(def_layout.page_cells[0][i], first_col[i]);
    
 	/* Define top row data */
    top_row_size = (sizeof(top_row) / sizeof(top_row[0]));
    for (i = 1; i < top_row_size; i++)  
-	   strcpy(def_layout.page_cells[i][0] , top_row[i-1]);
+	   strcpy(def_layout.page_cells[i][0], top_row[i-1]);
 
 	/* Write first column to default.conf */
 	fwrite(PG_START, strlen(PG_START), 1, fp);
 	fputc('\n', fp);
 	fputc('\t', fp);
 	fwrite(COL_START, strlen(COL_START), 1, fp);
-	fputc('\n', fp);
-   fputc('\t', fp);
-   fputc('\t', fp);
 
 	for (i = 0; i < DEF_ROWS; i++) 
    {
+      fputc('\n', fp);
+      fputc('\t', fp);
+      fputc('\t', fp);
+      fputc('\t', fp);
 		if (def_layout.page_cells[0][i] == 0) 
       {
-			fputc(NUL_ENTRY, fp);
+			fwrite(NUL_ENTRY, strlen(NUL_ENTRY), 1, fp);
       }
 		else
       {
 			fwrite(def_layout.page_cells[0][i], strlen(def_layout.page_cells[0][i]), 1, fp);
       }
-      fputc('\n', fp);
 	}
 
-	fputc('\t', fp);
-	fputc('\t', fp);
+   fputc('\n', fp);
+   fputc('\t', fp);
 	fwrite(COL_END, strlen(COL_END), 1, fp);
-	fputc('\n', fp);
 
 	/* Write top row to default.conf */
-	for (i = 1; i < DEF_COLS; i++) 
+	for (i = FIRST_COL_GAP; i < DEF_COLS; i++) 
    {
-		fputc('\t', fp);
-		fwrite(COL_START, strlen(COL_START), 1, fp);
+      fputc('\n', fp);
+      fputc('\t', fp);
+	   fwrite(COL_START, strlen(COL_START), 1, fp);
 		fputc('\n', fp);
 		fputc('\t', fp);
 		fputc('\t', fp);
+      fputc('\t', fp);
 
 		if (def_layout.page_cells[i][0] == 0)
       {
-			fputc(NUL_ENTRY, fp);
+			fwrite(NUL_ENTRY, strlen(NUL_ENTRY), 1, fp);
       }
 		else
       {
@@ -150,11 +145,10 @@ int create_def_config(void)
 		fputc('\n', fp);
 		fputc('\t', fp);
 		fwrite(COL_END, strlen(COL_END), 1, fp);
-		fputc('\n', fp);
 	}
-	fwrite(PG_END, strlen(PG_END), 1, fp);
+
    fputc('\n', fp);
-	fputc(EOF, fp);
+	fwrite(PG_END, strlen(PG_END), 1, fp);
 
    /* Data has now been loaded into config file, so free allocated memory */
    /* TODO: Doesn't appear to crash anymore, but should add test cases */
@@ -165,15 +159,15 @@ int create_def_config(void)
 }
 
 /* TODO: implement */
-int create_config(dimensions *dims_p, char *year) 
+int create_config(dimensions_t *dims_p, char *year) 
 {
 	printf("I dont do anything yet %s %ld", year, dims_p->onscr_cols);
 	return 0;
 }
 
-int load_config(page *page_p, char *year) 
+int load_config(page_t *page_p, char *year) 
 {
-	unsigned x = 0, y = 0;
+	unsigned col = 0, row = 0;
 	int pos, err, c;
 	FILE *fp = NULL;
 	char fpath[PATH_LIM] = { 0 };
@@ -206,6 +200,7 @@ int load_config(page *page_p, char *year)
 		return NUGET_ERR;
 	}
 
+   /* Initialize page */
 	err = page_init(page_p);
 	if (NUGET_ERR == err) 
    {
@@ -215,44 +210,45 @@ int load_config(page *page_p, char *year)
 		return NUGET_ERR;
 	}
 
-	/* Check for anything else */
-	while (1) 
+   /* Load file contents into page */
+   while (1) 
    {
-		/* Check for tabs and discard them (and EOF while we're at it) */
-		pos = ftell(fp);	
-		c = fgetc(fp);
-		if (c == EOF) 
+      if (feof(fp)) 
       {
-			fprintf(stderr, "Error: Did not find PG_END in %s\n", fpath);
-			nuget_perror(__FILE__, __FUNCTION__, __LINE__);
-			fclose(fp);
-			return NUGET_ERR;
-		}
-		else if (c == '\t') 
+         fprintf(stderr, "Error: Did not find PG_END in %s\n", fpath);
+         nuget_perror(__FILE__, __FUNCTION__, __LINE__);
+         fclose(fp);
+         return NUGET_ERR;
+      }
+
+      /* Check for tabs and discard them */
+      pos = ftell(fp);  
+      c = fgetc(fp);
+      if (c == '\t') 
       {
-			continue;
-		}
-		else 
+         continue;
+      }
+      else 
       {
-			fseek(fp, pos, SEEK_SET);
-		}
-	
-      /* Reading text */
-		fgets(line, MAX_DATA, fp);
+         fseek(fp, pos, SEEK_SET);
+      }
+   
+      /* Read in text until newline is encountered or MAX_DATA is reached */
+      fgets(line, MAX_DATA, fp);
       /* Replace newline feed with nul terminator */
       line[strcspn(line, "\n")] = '\0'; 
 
 		if (strcmp(line, PG_START) == 0) 
       {
-			x = 0, y = 0;
+			col = 0, row = 0;
 		}	
 		else if (strcmp(line, COL_START) == 0) 
       {
-			y = 0;	
+			row = 0;	
 		}
 		else if (strcmp(line, COL_END) == 0) 
       {
-			x++;
+			col++;
 		}
 		else if (strcmp(line, PG_END) == 0) 
       {
@@ -260,8 +256,8 @@ int load_config(page *page_p, char *year)
 		}
 		/* Data */
 		else {
-         strncpy(page_p->page_cells[x][y], line, cell_size);
-         y++;
+         memmove(page_p->page_cells[col][row], line, (size_t)MAX_DATA);
+         row++;
       }
    }
 	fclose(fp);
@@ -283,17 +279,17 @@ bool check_existing(char *fname)
        return false;
 }
 
-int page_init(page *page_p) 
+int page_init(page_t *page_p) 
 {
-	int x, y;	
+	int col, row;	
 
 	page_p->col_offset = 0;
 	page_p->row_offset = 0;
 
-	for (x = 0; x < MAX_OFSCR_COLS; x++) {
-		for (y = 0; y < MAX_OFSCR_ROWS; y++) {
-			page_p->page_cells[x][y] = calloc(1, sizeof(char) * (MAX_DATA + 1));
-			if (page_p->page_cells[x][y] == NULL) {
+	for (col = 0; row < MAX_OFSCR_COLS; col++) {
+		for (row = 0; row < MAX_OFSCR_ROWS; row++) {
+			page_p->page_cells[col][row] = calloc(1, sizeof(char) * MAX_DATA);
+			if (page_p->page_cells[col][row] == NULL) {
 				fprintf(stderr, "Error: Could not allocate memory for cell data: %s", strerror(errno));
 				nuget_perror(__FILE__, __FUNCTION__, __LINE__);
 				page_cleanup(page_p);
@@ -305,14 +301,11 @@ int page_init(page *page_p)
 	return 0;
 }
 
-void redraw(page *page_p, dimensions *dims_p, char *year) 
+void redraw(page_t *page_p, dimensions_t *dims_p, char *year) 
 {
-   char c;
    const char* elipses = "...";
 	unsigned col, row, cell_width, cell_height;
-	size_t x, y, i;
-   /* TODO: Should either store or calculate this */
-   const size_t h = 2; /* The gap before rows begin */
+	size_t i;
 
 	cell_width  = dims_p->cell_width;
 	cell_height = dims_p->cell_height;
@@ -324,45 +317,40 @@ void redraw(page *page_p, dimensions *dims_p, char *year)
 	mvprintw(0, (dims_p->win_width/2) - (strlen(year)/2), year);
 
    /* Print data contents of cells */
-   for (x = 0, col = page_p->col_offset; x < dims_p->onscr_cols; x += cell_width, col++) 
+   for (col = 0; col < dims_p->onscr_cols; col += cell_width)
    {
-      for (y = (cell_height * (int)h), row = page_p->row_offset; y < (dims_p->onscr_rows - h); y += cell_height, row++) 
-      {
-         i = 0;
-			while (i < cell_size - strlen(elipses)) 
+      for (row = (TOP_ROW_GAP * cell_height) + cell_height; row < dims_p->onscr_rows; row += cell_height)
+      { 
+         for (i = 0; i < (cell_size - strlen(elipses)); i++)
          {
-            if ((c = *(page_p->page_cells[x][y] + i)) == (char)0)
-               break;
-            mvaddch(y, x + i, c);
-				i++;
-			}	
-         printw("%s", elipses);
-		}
+            /* TODO: Potential error? */
+            mvaddch(row, col, (char)(*(page_p->page_cells[col][row] + i)));
+         }
+         printw(elipses);
+      }
    }
 
-	/* Apply attributes */
+	/* Apply attributes to first column and top row */
 
-	/* First column attrs */
-	for (x = page_p->row_offset, y = page_p->row_offset + (cell_height * h); y < dims_p->onscr_rows; y += cell_height) 
-		mvchgat(y, x, cell_width, A_BOLD, 2, NULL);	
+	for (col = 0, row = (TOP_ROW_GAP * cell_height) + cell_height; row < dims_p->onscr_rows; row += cell_height) 
+		mvchgat(row, col, cell_width, A_BOLD, 2, NULL);	
 
-	/* Top row attrs*/
-	for (x = page_p->row_offset + cell_width, y = cell_height; x < dims_p->onscr_cols; x += cell_width) 
-		mvchgat(y, x, cell_width, A_BOLD, 2, NULL);	
+	for (col = (FIRST_COL_GAP * cell_width), row = (TOP_ROW_GAP * cell_height); col < dims_p->onscr_cols; col += cell_width) 
+		mvchgat(row, col, cell_width, A_BOLD, 2, NULL);	
 
 	refresh();
 }
 
-int page_cleanup(page *page_p) 
+int page_cleanup(page_t *page_p) 
 {
-	int x, y;
-	for (x = 0; x < MAX_OFSCR_COLS; x++) 
+	int col, row;
+	for (col = 0; col < MAX_OFSCR_COLS; col++) 
    {
-		for (y = 0; y < MAX_OFSCR_ROWS; y++) 
+		for (row = 0; row < MAX_OFSCR_ROWS; row++) 
       {
-			if (!page_p->page_cells[x][y]) 
+			if (!page_p->page_cells[col][row]) 
          {
-				free(page_p->page_cells[x][y]);
+				free(page_p->page_cells[col][row]);
 			}
 		}
 	}

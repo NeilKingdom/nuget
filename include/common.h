@@ -11,16 +11,16 @@
 
 /* fileio functions */
 int  create_def_config(void);
-int  create_config(dimensions *dims_p, char *year);
-int  load_config(page *page_p, char *year);
-int  page_init(page *page_p);
-int  page_cleanup(page *page_p);
-void redraw(page *page_p, dimensions *dims_p, char *year);
+int  create_config(dimensions_t *dims_p, char *year);
+int  load_config(page_t *page_p, char *year);
+int  page_init(page_t *page_p);
+int  page_cleanup(page_t *page_p);
+void redraw(page_t *page_p, dimensions_t *dims_p, char *year);
 bool check_existing(char *fname);
 
 /* display functions */
-void init_nuget_ui(dimensions *dims_p, page *page_p);
-void calc_cell_dimensions(dimensions *dims_p);
+void init_nuget_ui(dimensions_t *dims_p, page_t *page_p);
+void calc_cell_dimensions(dimensions_t *dims_p);
 void create_win(WINDOW *win, int height, int width, int starty, int startx);
 void *sdims_watchdog(void *args);
 

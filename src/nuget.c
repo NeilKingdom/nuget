@@ -19,11 +19,11 @@ int main(int argc, char *argv[])
 {
 	char c;
    char *year = NULL;
-	unsigned rb, bb, lb = 0, tb = 0;  /* Boundaries: [Right, Bottom, Left, Top] */
+	unsigned tb, rb, bb, lb;  /* Boundaries: [Top, Right, Bottom, Left] */
 	unsigned x, y, cell_width, cell_height;
 	WINDOW *content_win = NULL;
-   page layout;
-	dimensions sdims;
+   page_t layout = { 0 };
+	dimensions_t sdims = { 0 };
 
    #if 0
    pthread_t watch_thread;
@@ -37,11 +37,15 @@ int main(int argc, char *argv[])
    #endif
 
 	init_nuget_ui(&sdims, &layout);
-   cell_size         = (uint8_t)(sdims.cell_width - 2);
+
+   /* Sub 2 to leave breathing room between cells */
+   cell_size         = (uint8_t)(sdims.cell_width - 2); 
 	cell_width        = sdims.cell_width;
 	cell_height       = sdims.cell_height;
+   tb                = TOP_ROW_GAP * cell_height;
    rb                = sdims.onscr_cols * cell_width;
-   bb                = sdims.onscr_rows * cell_height;
+   bb                = (sdims.onscr_rows * cell_height) - cell_height;
+   lb                = FIRST_COL_GAP * cell_width;
 
 	/* Start cursor at correct position (x: 1, y: 3) */
 	x = cell_width;
@@ -54,6 +58,24 @@ int main(int argc, char *argv[])
 	mvchgat(y, x, cell_width, A_BOLD, 2, NULL);
 	refresh();
 
+   /* Get current year */
+   year = malloc(sizeof(char) * (4 + 1));
+   if (year == NULL)
+   {
+      fprintf(stderr, "Failed to allocate memory: %s\n", strerror(errno));
+      nuget_perror(__FILE__, __FUNCTION__, __LINE__);
+      endwin();
+      exit(NUGET_ERR); 
+   }
+
+   /* Convert year to a string */
+   if (NUGET_ERR == nuget_itoa(get_year(), year, 10, 4))
+   {
+      fprintf(stderr, "Divide by zero is not acceptable\n");
+      year = "ERROR";
+   }
+
+   /* Main loop */
 	while((c = getch()) != K_QUIT) 
    {
 		switch(c) 
@@ -73,12 +95,9 @@ int main(int argc, char *argv[])
                }
                else 
                {
-                  /* TODO: sdims should be page */
-                  #if 0
-                  if (sdims.col_offset > 0)
-                     sdims.col_offset -= 1; 
-                  #endif 
-                  /* TODO: call redraw */
+                  if (layout.col_offset > 0)
+                     layout.col_offset -= 1; 
+                  redraw(&layout, &sdims, year);
                }
 				break;
 
@@ -92,12 +111,9 @@ int main(int argc, char *argv[])
                }
                else 
                {
-                  /* TODO: sdims should be page */
-                  #if 0
-                  if (sdims.row_offset < MAX_OFSCR_ROWS)
-                     sdims.row_offset += 1;
-                  #endif 
-                  /* TODO: call redraw */
+                  if (layout.row_offset < MAX_OFSCR_ROWS)
+                     layout.row_offset += 1;
+                  redraw(&layout, &sdims, year);
                }
 				break;
 
@@ -111,12 +127,9 @@ int main(int argc, char *argv[])
                }
                else 
                {
-                  /* TODO: sdims should be page */
-                  #if 0
-                  if (sdims.row_offset > 0)
-                     sdims.row_offset -= 1;
-                  #endif 
-                  /* TODO: call redraw */
+                  if (layout.row_offset > 0)
+                     layout.row_offset -= 1;
+                  redraw(&layout, &sdims, year);
                }
 				break;
 
@@ -130,32 +143,13 @@ int main(int argc, char *argv[])
                }
                else 
                {
-                  /* TODO: sdims should be page */
-                  #if 0
-                  if (sdims.col_offset < MAX_OFSCR_COLS)
-                     sdims.col_offset += 1; 
-                  #endif 
-                  /* TODO: call redraw */
+                  if (layout.col_offset < MAX_OFSCR_COLS)
+                     layout.col_offset += 1; 
+                  redraw(&layout, &sdims, year);
                }
 				break;
 
 			case K_SAVE:
-            /* Get current year */
-            year = malloc(sizeof(char) * (4 + 1));
-            if (year == NULL)
-            {
-               fprintf(stderr, "Failed to allocate memory: %s\n", strerror(errno));
-               nuget_perror(__FILE__, __FUNCTION__, __LINE__);
-               endwin();
-               exit(NUGET_ERR); 
-            }
-
-            /* Convert year to a string */
-            if (NUGET_ERR == nuget_itoa(get_year(), year, 10, 4))
-            {
-               fprintf(stderr, "Divide by zero is not acceptable\n");
-               year = "ERROR";
-            }
             create_config(&sdims, year);
 				break;
 		}

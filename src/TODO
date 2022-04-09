@@ -1,10 +1,3 @@
-- Primarily, need to change naming convensions of x, y, row, and col to be consistent. 
-
-x = x index of arrays
-y = y index of arrays
-col = column of the page
-row = row of the page
-
 - Add a testing framework
 
-- Rename page to page_t and dimensions to dimensions_t
+- Should MAX_DATA be MAX_DATA + 1? I feel like it's unecessary since we only ever write to file stream which doesn't need null terminator anyways
