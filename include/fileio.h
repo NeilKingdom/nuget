@@ -27,9 +27,9 @@ typedef char*  cell_data_t;
 extern uint8_t cell_size;
 
 typedef struct { 
-	uint16_t    col_offset;                                 /* Column offset of the offscreen page for drawing onscreen cells */
-	uint16_t    row_offset;                                 /* Row offset of the offscreen page for drawing onscreen cells */
-	cell_data_t page_cells[MAX_OFSCR_COLS][MAX_OFSCR_ROWS]; /* The entire offscreen page of cells loaded from conf file */
+	uint16_t    col_offset;                                  /* Column offset of the offscreen page for drawing onscreen cells */
+	uint16_t    row_offset;                                  /* Row offset of the offscreen page for drawing onscreen cells */
+	cell_data_t page_cells[MAX_OFSCR_COLS][MAX_OFSCR_ROWS];  /* The entire offscreen page of cells loaded from conf file */
 } page_t;
 
 static char* const top_row[DEF_COLS] = { 

@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
    tb                = TOP_ROW_GAP * cell_height;
    rb                = sdims.onscr_cols * cell_width;
    bb                = (sdims.onscr_rows * cell_height) - cell_height;
-   lb                = FIRST_COL_GAP * cell_width;
+   lb                = cell_width;
 
 	/* Start cursor at correct position (x: 1, y: 3) */
 	x = cell_width;

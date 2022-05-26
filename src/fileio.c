@@ -123,7 +123,7 @@ int create_def_config(void)
 	fwrite(COL_END, strlen(COL_END), 1, fp);
 
 	/* Write top row to default.conf */
-	for (i = FIRST_COL_GAP; i < DEF_COLS; i++) 
+	for (i = 0; i < DEF_COLS; i++) 
    {
       fputc('\n', fp);
       fputc('\t', fp);
@@ -168,7 +168,8 @@ int create_config(dimensions_t *dims_p, char *year)
 int load_config(page_t *page_p, char *year) 
 {
 	unsigned col = 0, row = 0;
-	int pos, err, c;
+	long pos;
+	int err, c;
 	FILE *fp = NULL;
 	char fpath[PATH_LIM] = { 0 };
 	char line[MAX_DATA];
@@ -179,7 +180,7 @@ int load_config(page_t *page_p, char *year)
    {
 		strcat(fpath, year);
 	}
-	else if(check_existing(DEF_CONF)) 
+	else if (check_existing(DEF_CONF)) 
    {
 		strcat(fpath, DEF_CONF);			
 	}
@@ -234,6 +235,7 @@ int load_config(page_t *page_p, char *year)
       }
    
       /* Read in text until newline is encountered or MAX_DATA is reached */
+		/* TODO: Handle case where data actually is more than MAX_DATA (discard rest of line and append NULL terminator) */
       fgets(line, MAX_DATA, fp);
       /* Replace newline feed with nul terminator */
       line[strcspn(line, "\n")] = '\0'; 
@@ -256,7 +258,7 @@ int load_config(page_t *page_p, char *year)
 		}
 		/* Data */
 		else {
-         memmove(page_p->page_cells[col][row], line, (size_t)MAX_DATA);
+         strncpy((char *)(page_p->page_cells[col][row]), (char *)line, (size_t)(sizeof(char) * MAX_DATA));
          row++;
       }
    }
@@ -281,15 +283,18 @@ bool check_existing(char *fname)
 
 int page_init(page_t *page_p) 
 {
-	int col, row;	
+	int col = 0, row = 0;	
 
 	page_p->col_offset = 0;
 	page_p->row_offset = 0;
 
-	for (col = 0; row < MAX_OFSCR_COLS; col++) {
-		for (row = 0; row < MAX_OFSCR_ROWS; row++) {
+	for (col = 0; col < MAX_OFSCR_COLS; col++) 
+	{
+		for (row = 0; row < MAX_OFSCR_ROWS; row++) 
+		{
 			page_p->page_cells[col][row] = calloc(1, sizeof(char) * MAX_DATA);
-			if (page_p->page_cells[col][row] == NULL) {
+			if (page_p->page_cells[col][row] == NULL) 
+			{
 				fprintf(stderr, "Error: Could not allocate memory for cell data: %s", strerror(errno));
 				nuget_perror(__FILE__, __FUNCTION__, __LINE__);
 				page_cleanup(page_p);
@@ -304,8 +309,8 @@ int page_init(page_t *page_p)
 void redraw(page_t *page_p, dimensions_t *dims_p, char *year) 
 {
    const char* elipses = "...";
-	unsigned col, row, cell_width, cell_height;
-	size_t i;
+	size_t col, row;
+	unsigned x, y, cell_width, cell_height;
 
 	cell_width  = dims_p->cell_width;
 	cell_height = dims_p->cell_height;
@@ -316,27 +321,77 @@ void redraw(page_t *page_p, dimensions_t *dims_p, char *year)
 	/* Print year */
 	mvprintw(0, (dims_p->win_width/2) - (strlen(year)/2), year);
 
-   /* Print data contents of cells */
-   for (col = 0; col < dims_p->onscr_cols; col += cell_width)
+   /* Print first col */
+	for (row = (TOP_ROW_GAP * cell_height), col = 0; row < dims_p->onscr_rows; row += cell_height)
+	{
+		x = col / cell_width;
+		y = row / cell_height;	
+		
+		if (page_p->page_cells[x][y])
+		{
+			mvaddch(row, col, ' '); /* Spacing */
+			addnstr(page_p->page_cells[x][y], cell_size - strlen(elipses));
+			if (strlen(page_p->page_cells[x][y]) > cell_size - strlen(elipses))
+				printw(elipses);
+		}
+		else 
+		{
+			continue;
+		}
+	} 
+
+	/* TODO: Move this into the for loop above */
+	/* Apply attributes to first column */
+	for (col = 0, row = (TOP_ROW_GAP * cell_height); row < dims_p->onscr_rows; row += cell_height) 
+		mvchgat(row, col, cell_width, A_BOLD, 2, NULL);	
+
+	/* Print top row */
+	/* TODO: During debugging found that page_p->page_cells[2][0] = "Jan Est", page_cells[3][0] = "Jan Act", etc. */
+	for (col = cell_width, row = cell_height; col < dims_p->onscr_cols; col += cell_width)
+	{
+		x = col / cell_width;
+		y = (row - cell_height) / cell_height;
+		
+		if (page_p->page_cells[x][y])
+		{
+			mvaddch(row, col, ' '); /* Spacing */
+			addnstr(page_p->page_cells[x][y], cell_size - strlen(elipses));
+			if (strlen(page_p->page_cells[x][y]) > cell_size - strlen(elipses))
+				printw(elipses);
+		}
+		else 
+		{
+			continue;
+		}
+	} 
+
+	/* TODO: Move this into the for loop above */
+	/* Apply attributes to top row */
+	for (col = cell_width, row = cell_height; col < dims_p->onscr_cols; col += cell_width) 
+		mvchgat(row, col, cell_width, A_BOLD, 2, NULL);	
+
+	/* Print cell data accounting for offsets */
+   for (col = cell_width; col < dims_p->onscr_cols; col += cell_width)
    {
-      for (row = (TOP_ROW_GAP * cell_height) + cell_height; row < dims_p->onscr_rows; row += cell_height)
+      for (row = (TOP_ROW_GAP * cell_height); row < dims_p->onscr_rows; row += cell_height)
       { 
-         for (i = 0; i < (cell_size - strlen(elipses)); i++)
-         {
-            /* TODO: Potential error? */
-            mvaddch(row, col, (char)(*(page_p->page_cells[col][row] + i)));
-         }
-         printw(elipses);
+			/* TODO: There may be a bug here. Not sure if we need to account for first col and top row */
+			x = (page_p->col_offset * (dims_p->onscr_cols)) + (col / cell_width);
+			y = (page_p->row_offset * (dims_p->onscr_rows)) + (row / cell_height);
+
+			if (page_p->page_cells[x][y]) 
+			{
+				mvaddch(row, col, ' '); /* Spacing */
+				addnstr(page_p->page_cells[x][y], cell_size - strlen(elipses));
+				if (strlen(page_p->page_cells[x][y]) > cell_size - strlen(elipses))
+         		printw(elipses);
+			}
+			else 
+			{
+				continue;
+			}
       }
    }
-
-	/* Apply attributes to first column and top row */
-
-	for (col = 0, row = (TOP_ROW_GAP * cell_height) + cell_height; row < dims_p->onscr_rows; row += cell_height) 
-		mvchgat(row, col, cell_width, A_BOLD, 2, NULL);	
-
-	for (col = (FIRST_COL_GAP * cell_width), row = (TOP_ROW_GAP * cell_height); col < dims_p->onscr_cols; col += cell_width) 
-		mvchgat(row, col, cell_width, A_BOLD, 2, NULL);	
 
 	refresh();
 }
@@ -349,9 +404,7 @@ int page_cleanup(page_t *page_p)
 		for (row = 0; row < MAX_OFSCR_ROWS; row++) 
       {
 			if (!page_p->page_cells[col][row]) 
-         {
 				free(page_p->page_cells[col][row]);
-			}
 		}
 	}
 

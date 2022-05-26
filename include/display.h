@@ -34,7 +34,6 @@
 #define MAX_OFSCR_COLS 50		  
 #define MAX_OFSCR_ROWS 150		  
 #define CWIN_HEIGHT    5
-#define FIRST_COL_GAP  1
 #define TOP_ROW_GAP    2
 
 /* -1 means no color, therefore, the background color wont exist with this attribute */
