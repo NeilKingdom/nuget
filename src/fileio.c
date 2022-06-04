@@ -20,7 +20,7 @@
 
 /*
  * Layout of the default file:
- * 
+ *
  * [Page Start]
  * 	[Col Start]
  *			data data data
@@ -34,11 +34,20 @@
  * Note: This function isn't concerned with populating all cells;
  * only those which it must write into default.conf. Normally, when
  * writing to a config file, all cells should be recorded
+ *
+ * @see load_def_config()
+ * @see create_config()
+ * @see load_config()
+ * @see page_init()
+ * @see page_cleanup()
+ * @see redraw()
+ * @see check_existing()
+ * @return Exit status
 */
-int create_def_config(void) 
+int create_def_config(void)
 {
    int top_row_size, first_col_size, i;
-	FILE *fp = NULL;		
+	FILE *fp = NULL;
    /* Path character limit */
 	char fpath[PATH_LIM] = { 0 };
 	page_t def_layout = { 0 };
@@ -46,9 +55,9 @@ int create_def_config(void)
 	strcat(fpath, TEMP_DIR);
 	strcat(fpath, DEF_CONF);
 	strcat(fpath, ".conf");
-	
+
 	fp = fopen(fpath, "w");
-	if (fp == NULL) 
+	if (fp == NULL)
    {
 		fprintf(stderr, "Error: Could not open file %s for write: %s", fpath, strerror(errno));
 		nuget_perror(__FILE__, __FUNCTION__, __LINE__);
@@ -59,10 +68,10 @@ int create_def_config(void)
 	/* Allocate Memory (could use page_init(), but we only need to allocate top row and first column) */
 
  	/* First column */
-	for (i = 0; i < DEF_ROWS; i++) 
+	for (i = 0; i < DEF_ROWS; i++)
    {
 		def_layout.page_cells[0][i] = calloc(1, sizeof(char) * MAX_DATA);
-		if (def_layout.page_cells[0][i] == NULL) 
+		if (def_layout.page_cells[0][i] == NULL)
       {
 			fprintf(stderr, "Error: Could not allocate memory for cell data: %s", strerror(errno));
 			nuget_perror(__FILE__, __FUNCTION__, __LINE__);
@@ -73,10 +82,10 @@ int create_def_config(void)
 	}
 
 	/* Top row */
-	for (i = 1; i < DEF_COLS; i++) 
+	for (i = 1; i < DEF_COLS; i++)
    {
 		def_layout.page_cells[i][0] = calloc(1, sizeof(char) * MAX_DATA);
-		if (def_layout.page_cells[i][0] == NULL) 
+		if (def_layout.page_cells[i][0] == NULL)
       {
 			fprintf(stderr, "Error: Could not allocate memory for cell data: %s", strerror(errno));
 			nuget_perror(__FILE__, __FUNCTION__, __LINE__);
@@ -90,10 +99,10 @@ int create_def_config(void)
    first_col_size = sizeof(first_col) / sizeof(first_col[0]);
    for (i = 0; i < first_col_size; i++)
 	   strcpy(def_layout.page_cells[0][i], first_col[i]);
-   
+
 	/* Define top row data */
    top_row_size = (sizeof(top_row) / sizeof(top_row[0]));
-   for (i = 1; i < top_row_size; i++)  
+   for (i = 1; i < top_row_size; i++)
 	   strcpy(def_layout.page_cells[i][0], top_row[i-1]);
 
 	/* Write first column to default.conf */
@@ -102,13 +111,13 @@ int create_def_config(void)
 	fputc('\t', fp);
 	fwrite(COL_START, strlen(COL_START), 1, fp);
 
-	for (i = 0; i < DEF_ROWS; i++) 
+	for (i = 0; i < DEF_ROWS; i++)
    {
       fputc('\n', fp);
       fputc('\t', fp);
       fputc('\t', fp);
       fputc('\t', fp);
-		if (def_layout.page_cells[0][i] == 0) 
+		if (def_layout.page_cells[0][i] == 0)
       {
 			fwrite(NUL_ENTRY, strlen(NUL_ENTRY), 1, fp);
       }
@@ -123,7 +132,7 @@ int create_def_config(void)
 	fwrite(COL_END, strlen(COL_END), 1, fp);
 
 	/* Write top row to default.conf */
-	for (i = 0; i < DEF_COLS; i++) 
+	for (i = 0; i < DEF_COLS; i++)
    {
       fputc('\n', fp);
       fputc('\t', fp);
@@ -159,13 +168,13 @@ int create_def_config(void)
 }
 
 /* TODO: implement */
-int create_config(dimensions_t *dims_p, char *year) 
+int create_config(dimensions_t *dims_p, char *year)
 {
 	printf("I dont do anything yet %s %ld", year, dims_p->onscr_cols);
 	return 0;
 }
 
-int load_config(page_t *page_p, char *year) 
+int load_config(page_t *page_p, char *year)
 {
 	unsigned col = 0, row = 0;
 	long pos;
@@ -176,24 +185,24 @@ int load_config(page_t *page_p, char *year)
 
 	strcat(fpath, TEMP_DIR);
 	/* Decide whether to use default.conf or year.conf */
-	if (check_existing(year)) 
+	if (check_existing(year))
    {
 		strcat(fpath, year);
 	}
-	else if (check_existing(DEF_CONF)) 
+	else if (check_existing(DEF_CONF))
    {
-		strcat(fpath, DEF_CONF);			
+		strcat(fpath, DEF_CONF);
 	}
 	/* default.conf got deleted : re-create it */
-	else 
+	else
    {
 		create_def_config();
 		strcat(fpath, DEF_CONF);
 	}
 	strcat(fpath, ".conf");
-	
+
 	fp = fopen(fpath, "r");
-	if (fp == NULL) 
+	if (fp == NULL)
    {
 		fprintf(stderr, "Error: Could not open file %s for read: %s", fpath, strerror(errno));
 		nuget_perror(__FILE__, __FUNCTION__, __LINE__);
@@ -203,7 +212,7 @@ int load_config(page_t *page_p, char *year)
 
    /* Initialize page */
 	err = page_init(page_p);
-	if (NUGET_ERR == err) 
+	if (NUGET_ERR == err)
    {
 		fprintf(stderr, "Error: Page failed to initialize\n");
 		nuget_perror(__FILE__, __FUNCTION__, __LINE__);
@@ -212,9 +221,9 @@ int load_config(page_t *page_p, char *year)
 	}
 
    /* Load file contents into page */
-   while (1) 
+   while (1)
    {
-      if (feof(fp)) 
+      if (feof(fp))
       {
          fprintf(stderr, "Error: Did not find PG_END in %s\n", fpath);
          nuget_perror(__FILE__, __FUNCTION__, __LINE__);
@@ -223,36 +232,36 @@ int load_config(page_t *page_p, char *year)
       }
 
       /* Check for tabs and discard them */
-      pos = ftell(fp);  
+      pos = ftell(fp);
       c = fgetc(fp);
-      if (c == '\t') 
+      if (c == '\t')
       {
          continue;
       }
-      else 
+      else
       {
          fseek(fp, pos, SEEK_SET);
       }
-   
+
       /* Read in text until newline is encountered or MAX_DATA is reached */
 		/* TODO: Handle case where data actually is more than MAX_DATA (discard rest of line and append NULL terminator) */
       fgets(line, MAX_DATA, fp);
       /* Replace newline feed with nul terminator */
-      line[strcspn(line, "\n")] = '\0'; 
+      line[strcspn(line, "\n")] = '\0';
 
-		if (strcmp(line, PG_START) == 0) 
+		if (strcmp(line, PG_START) == 0)
       {
 			col = 0, row = 0;
-		}	
-		else if (strcmp(line, COL_START) == 0) 
-      {
-			row = 0;	
 		}
-		else if (strcmp(line, COL_END) == 0) 
+		else if (strcmp(line, COL_START) == 0)
+      {
+			row = 0;
+		}
+		else if (strcmp(line, COL_END) == 0)
       {
 			col++;
 		}
-		else if (strcmp(line, PG_END) == 0) 
+		else if (strcmp(line, PG_END) == 0)
       {
 			break;
 		}
@@ -267,7 +276,7 @@ int load_config(page_t *page_p, char *year)
 	return 0;
 }
 
-bool check_existing(char *fname) 
+bool check_existing(char *fname)
 {
 	char file[20] = { 0 };
 	struct stat stat_buf;
@@ -277,23 +286,23 @@ bool check_existing(char *fname)
 
 	if (stat(file, &stat_buf) == 0)
        return true;
-   else  
+   else
        return false;
 }
 
-int page_init(page_t *page_p) 
+int page_init(page_t *page_p)
 {
-	int col = 0, row = 0;	
+	int col = 0, row = 0;
 
 	page_p->col_offset = 0;
 	page_p->row_offset = 0;
 
-	for (col = 0; col < MAX_OFSCR_COLS; col++) 
+	for (col = 0; col < MAX_OFSCR_COLS; col++)
 	{
-		for (row = 0; row < MAX_OFSCR_ROWS; row++) 
+		for (row = 0; row < MAX_OFSCR_ROWS; row++)
 		{
 			page_p->page_cells[col][row] = calloc(1, sizeof(char) * MAX_DATA);
-			if (page_p->page_cells[col][row] == NULL) 
+			if (page_p->page_cells[col][row] == NULL)
 			{
 				fprintf(stderr, "Error: Could not allocate memory for cell data: %s", strerror(errno));
 				nuget_perror(__FILE__, __FUNCTION__, __LINE__);
@@ -302,11 +311,11 @@ int page_init(page_t *page_p)
 			}
 		}
 	}
-	
+
 	return 0;
 }
 
-void redraw(page_t *page_p, dimensions_t *dims_p, char *year) 
+void redraw(page_t *page_p, dimensions_t *dims_p, char *year)
 {
    const char* elipses = "...";
 	size_t col, row;
@@ -325,8 +334,8 @@ void redraw(page_t *page_p, dimensions_t *dims_p, char *year)
 	for (row = (TOP_ROW_GAP * cell_height), col = 0; row < dims_p->onscr_rows; row += cell_height)
 	{
 		x = col / cell_width;
-		y = row / cell_height;	
-		
+		y = row / cell_height;
+
 		if (page_p->page_cells[x][y])
 		{
 			mvaddch(row, col, ' '); /* Spacing */
@@ -334,16 +343,16 @@ void redraw(page_t *page_p, dimensions_t *dims_p, char *year)
 			if (strlen(page_p->page_cells[x][y]) > cell_size - strlen(elipses))
 				printw(elipses);
 		}
-		else 
+		else
 		{
 			continue;
 		}
-	} 
+	}
 
 	/* TODO: Move this into the for loop above */
 	/* Apply attributes to first column */
-	for (col = 0, row = (TOP_ROW_GAP * cell_height); row < dims_p->onscr_rows; row += cell_height) 
-		mvchgat(row, col, cell_width, A_BOLD, 2, NULL);	
+	for (col = 0, row = (TOP_ROW_GAP * cell_height); row < dims_p->onscr_rows; row += cell_height)
+		mvchgat(row, col, cell_width, A_BOLD, 2, NULL);
 
 	/* Print top row */
 	/* TODO: During debugging found that page_p->page_cells[2][0] = "Jan Est", page_cells[3][0] = "Jan Act", etc. */
@@ -351,7 +360,7 @@ void redraw(page_t *page_p, dimensions_t *dims_p, char *year)
 	{
 		x = col / cell_width;
 		y = (row - cell_height) / cell_height;
-		
+
 		if (page_p->page_cells[x][y])
 		{
 			mvaddch(row, col, ' '); /* Spacing */
@@ -359,34 +368,34 @@ void redraw(page_t *page_p, dimensions_t *dims_p, char *year)
 			if (strlen(page_p->page_cells[x][y]) > cell_size - strlen(elipses))
 				printw(elipses);
 		}
-		else 
+		else
 		{
 			continue;
 		}
-	} 
+	}
 
 	/* TODO: Move this into the for loop above */
 	/* Apply attributes to top row */
-	for (col = cell_width, row = cell_height; col < dims_p->onscr_cols; col += cell_width) 
-		mvchgat(row, col, cell_width, A_BOLD, 2, NULL);	
+	for (col = cell_width, row = cell_height; col < dims_p->onscr_cols; col += cell_width)
+		mvchgat(row, col, cell_width, A_BOLD, 2, NULL);
 
 	/* Print cell data accounting for offsets */
    for (col = cell_width; col < dims_p->onscr_cols; col += cell_width)
    {
       for (row = (TOP_ROW_GAP * cell_height); row < dims_p->onscr_rows; row += cell_height)
-      { 
+      {
 			/* TODO: There may be a bug here. Not sure if we need to account for first col and top row */
 			x = (page_p->col_offset * (dims_p->onscr_cols)) + (col / cell_width);
 			y = (page_p->row_offset * (dims_p->onscr_rows)) + (row / cell_height);
 
-			if (page_p->page_cells[x][y]) 
+			if (page_p->page_cells[x][y])
 			{
 				mvaddch(row, col, ' '); /* Spacing */
 				addnstr(page_p->page_cells[x][y], cell_size - strlen(elipses));
 				if (strlen(page_p->page_cells[x][y]) > cell_size - strlen(elipses))
          		printw(elipses);
 			}
-			else 
+			else
 			{
 				continue;
 			}
@@ -396,14 +405,14 @@ void redraw(page_t *page_p, dimensions_t *dims_p, char *year)
 	refresh();
 }
 
-int page_cleanup(page_t *page_p) 
+int page_cleanup(page_t *page_p)
 {
 	int col, row;
-	for (col = 0; col < MAX_OFSCR_COLS; col++) 
+	for (col = 0; col < MAX_OFSCR_COLS; col++)
    {
-		for (row = 0; row < MAX_OFSCR_ROWS; row++) 
+		for (row = 0; row < MAX_OFSCR_ROWS; row++)
       {
-			if (!page_p->page_cells[col][row]) 
+			if (!page_p->page_cells[col][row])
 				free(page_p->page_cells[col][row]);
 		}
 	}
