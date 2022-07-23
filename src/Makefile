@@ -9,9 +9,8 @@ ODIR = $(PROJ_DIR)/obj
 OBJ = $(patsubst %.c, $(ODIR)/%.o, $(SRC))
 
 CC = gcc
-DEBUG = -g -DDEBUG #-Werror 
-IDIR = -I$(DDIR)
-CFLAGS += $(DEBUG) -DTEMP_DIR=\"$(PROJ_DIR)/tmp/\" -Wall -Wextra -O2
+DEBUG = -g -DDEBUG #-Werror
+CFLAGS += $(DEBUG) -I$(DDIR) -DTEMP_DIR=\"$(PROJ_DIR)/tmp/\" -Wall -Wextra -O2
 LDFLAGS += -lncurses -lm -lc
 BIN := nuget
 
@@ -19,8 +18,8 @@ all: $(OBJ)
 	$(CC) -o $(BIN) $^ $(LDFLAGS) $(CFLAGS)
 
 $(ODIR)/%.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(IDIR) $(CFLAGS) 
+	$(CC) -c -o $@ $< $(CFLAGS)
 
 .PHONY: clean
-clean: 
+clean:
 	rm -f $(BIN) $(ODIR)/*.o

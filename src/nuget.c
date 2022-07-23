@@ -1,9 +1,10 @@
 /**
- * Briefing: Starts the program and handles key-press events
+ * @file nuget.c
+ * Starts the program and handles key-press events
  *
- * @author Neil Kindom
- * @version 1.0
- * @since 10-25-2021
+ * **Author:** Neil Kindom
+ * **Version:** 1.0
+ * **Since:** 10-25-2021
 */
 #include <ncurses.h>
 #include <pthread.h>
@@ -15,7 +16,14 @@
 #include "misc.h"
 #include "common.h"
 
-int main(int argc, char *argv[]) 
+/**
+ * main handles initialization of important variables, as well as the
+ * I/O event loop for handling user input.
+ *
+ * @param[in] argc The argument count
+ * @param[in] argv The argument vector list
+*/
+int main(int argc, char *argv[])
 {
 	char c;
    char *year = NULL;
@@ -30,16 +38,16 @@ int main(int argc, char *argv[])
    int err = pthread_create(&watch_thread, NULL, sdims_watchdog(NULL), NULL);
    if (err != 0)
    {
-      fprintf(stderr, "Failed to create pthread\n"); 
+      fprintf(stderr, "Failed to create pthread\n");
       nuget_perror(__FILE__, __FUNCTION__, __LINE__);
       return err;
-   } 
+   }
    #endif
 
 	init_nuget_ui(&sdims, &layout);
 
    /* Sub 2 to leave breathing room between cells */
-   cell_size         = (uint8_t)(sdims.cell_width - 2); 
+   cell_size         = (uint8_t)(sdims.cell_width - 2);
 	cell_width        = sdims.cell_width;
 	cell_height       = sdims.cell_height;
    tb                = TOP_ROW_GAP * cell_height;
@@ -53,7 +61,7 @@ int main(int argc, char *argv[])
 	move(y, x);
 
    /* Set initial color/font attributes */
-	mvchgat(cell_height, x, cell_width, A_BOLD, 1, NULL); 
+	mvchgat(cell_height, x, cell_width, A_BOLD, 1, NULL);
 	mvchgat(y, 0, cell_width, A_BOLD, 1, NULL);
 	mvchgat(y, x, cell_width, A_BOLD, 2, NULL);
 	refresh();
@@ -65,7 +73,7 @@ int main(int argc, char *argv[])
       fprintf(stderr, "Failed to allocate memory: %s\n", strerror(errno));
       nuget_perror(__FILE__, __FUNCTION__, __LINE__);
       endwin();
-      exit(NUGET_ERR); 
+      exit(NUGET_ERR);
    }
 
    /* Convert year to a string */
@@ -76,9 +84,9 @@ int main(int argc, char *argv[])
    }
 
    /* Main loop */
-	while((c = getch()) != K_QUIT) 
+	while((c = getch()) != K_QUIT)
    {
-		switch(c) 
+		switch(c)
       {
 			case K_ENTER:
 				;;
@@ -93,10 +101,10 @@ int main(int argc, char *argv[])
                   mvchgat(y, x, cell_width, A_NORMAL, 0, NULL); 			  /* Current cell */
                   x -= cell_width;
                }
-               else 
+               else
                {
                   if (layout.col_offset > 0)
-                     layout.col_offset -= 1; 
+                     layout.col_offset -= 1;
                   redraw(&layout, &sdims, year);
                }
 				break;
@@ -109,7 +117,7 @@ int main(int argc, char *argv[])
                   mvchgat(y, x, cell_width, A_NORMAL, 0, NULL);
                   y += cell_height;
                }
-               else 
+               else
                {
                   if (layout.row_offset < MAX_OFSCR_ROWS)
                      layout.row_offset += 1;
@@ -125,7 +133,7 @@ int main(int argc, char *argv[])
                   mvchgat(y, x, cell_width, A_NORMAL, 0, NULL);
                   y -= cell_height;
                }
-               else 
+               else
                {
                   if (layout.row_offset > 0)
                      layout.row_offset -= 1;
@@ -141,10 +149,10 @@ int main(int argc, char *argv[])
                   mvchgat(y, x, cell_width, A_NORMAL, 0, NULL);
                   x += cell_width;
                }
-               else 
+               else
                {
                   if (layout.col_offset < MAX_OFSCR_COLS)
-                     layout.col_offset += 1; 
+                     layout.col_offset += 1;
                   redraw(&layout, &sdims, year);
                }
 				break;
@@ -156,17 +164,17 @@ int main(int argc, char *argv[])
 
 		move(y, x);
 		/* Update currently selected attrs */
-		mvchgat(cell_height, x, cell_width, A_BOLD, 1, NULL); 
+		mvchgat(cell_height, x, cell_width, A_BOLD, 1, NULL);
 		mvchgat(y, 0, cell_width, A_BOLD, 1, NULL);
 		mvchgat(y, x, cell_width, A_BOLD, 2, NULL);
 		refresh();
-	} 
+	}
 
 	delwin(content_win);
 	endwin();
    #if 0
    (void) pthread_join(watch_thread, NULL);
    #endif
-   
+
 	return 0;
 }

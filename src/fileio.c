@@ -1,9 +1,10 @@
 /**
- * Briefing: Read/Write data to the configuration files
+ * @file fileio.c
+ * Read/Write data to the configuration files
  *
- * @author Neil Kingdom
- * @version 1.0
- * @since 10-25-2021
+ * Author Neil Kingdom
+ * Version 1.0
+ * Since 10-25-2021
 */
 
 #include <ncurses.h>
@@ -34,15 +35,6 @@
  * Note: This function isn't concerned with populating all cells;
  * only those which it must write into default.conf. Normally, when
  * writing to a config file, all cells should be recorded
- *
- * @see load_def_config()
- * @see create_config()
- * @see load_config()
- * @see page_init()
- * @see page_cleanup()
- * @see redraw()
- * @see check_existing()
- * @return Exit status
 */
 int create_def_config(void)
 {
@@ -168,12 +160,29 @@ int create_def_config(void)
 }
 
 /* TODO: implement */
+/**
+ * Creates a non-default configuration template.
+ * This is used to save the users active session context.
+ *
+ * @param[in] dims_p Pointer to a dimensions_t struct
+ * @param[in] year String representation of current year
+*/
 int create_config(dimensions_t *dims_p, char *year)
 {
 	printf("I dont do anything yet %s %ld", year, dims_p->onscr_cols);
 	return 0;
 }
 
+/**
+ * Loads a configuration page from the tmp/ directory.
+ * It first searches for a config file named after the
+ * current year. If it cannot find that, it then checks
+ * for default.conf. If neither exist, it creates a new
+ * default.conf file.
+ *
+ * @param[in] page_p Pointer to a page_t struct
+ * @param[in] year String representation of current year
+*/
 int load_config(page_t *page_p, char *year)
 {
 	unsigned col = 0, row = 0;
@@ -276,6 +285,13 @@ int load_config(page_t *page_p, char *year)
 	return 0;
 }
 
+/**
+ * Checks that the current file specified by fname exists.
+ * fname is expected to contain the relative or absolute
+ * path if the file is not located in the working directory.
+ *
+ * @param fname NULL terminated string containing absolute/relative path of the file
+*/
 bool check_existing(char *fname)
 {
 	char file[20] = { 0 };
@@ -290,6 +306,11 @@ bool check_existing(char *fname)
        return false;
 }
 
+/**
+ * Initializes the page cells to 0.
+ *
+ * @param[in] page_p Pointer to page_t struct
+*/
 int page_init(page_t *page_p)
 {
 	int col = 0, row = 0;
@@ -315,6 +336,14 @@ int page_init(page_t *page_p)
 	return 0;
 }
 
+/**
+ * Redraws/refreshes the page by clearing the window and then
+ * re-adding all page content that ought to be visible
+ *
+ * @param[in] page_p Pointer to page_t struct
+ * @param[in] dims_p Pointer to dimensions_t struct
+ * @param[in] year String representation of current year
+*/
 void redraw(page_t *page_p, dimensions_t *dims_p, char *year)
 {
    const char* elipses = "...";
@@ -405,6 +434,11 @@ void redraw(page_t *page_p, dimensions_t *dims_p, char *year)
 	refresh();
 }
 
+/**
+ * Free all cells that point to heap memory in the page
+ *
+ * @param[in] page_p Pointer to page_t struct
+*/
 int page_cleanup(page_t *page_p)
 {
 	int col, row;

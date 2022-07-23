@@ -1,0 +1,147 @@
+\hypertarget{fileio_8c}{}\doxysection{/home/neil/devel/github/\+Nuget/src/fileio.c File Reference}
+\label{fileio_8c}\index{/home/neil/devel/github/Nuget/src/fileio.c@{/home/neil/devel/github/Nuget/src/fileio.c}}
+
+
+Read/\+Write data to the configuration files.  
+
+
+{\ttfamily \#include $<$ncurses.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$unistd.\+h$>$}\newline
+{\ttfamily \#include $<$errno.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$assert.\+h$>$}\newline
+{\ttfamily \#include $<$sys/stat.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}common.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}nuget.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}misc.\+h\char`\"{}}\newline
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{fileio_8c_a1c56d75accd8edce644bc1ed0e31cac0}\label{fileio_8c_a1c56d75accd8edce644bc1ed0e31cac0}} 
+int {\bfseries create\+\_\+def\+\_\+config} (void)
+\item 
+int \mbox{\hyperlink{fileio_8c_a961586c68b80467e50e56355d9e0f90e}{create\+\_\+config}} (dimensions\+\_\+t $\ast$dims\+\_\+p, char $\ast$year)
+\begin{DoxyCompactList}\small\item\em Creates a non-\/default configuration template. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{fileio_8c_a0619fd13e04df25f6b84f621375d60d3}{load\+\_\+config}} (page\+\_\+t $\ast$page\+\_\+p, char $\ast$year)
+\begin{DoxyCompactList}\small\item\em Loads a configuration page from the tmp/ directory. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{fileio_8c_a1630426d62692f00d77a92691a8cb2ac}{check\+\_\+existing}} (char $\ast$fname)
+\begin{DoxyCompactList}\small\item\em Checks that the current file specified by fname exists. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{fileio_8c_a8f85421a15ee6c769a71e7e788bb4d66}{page\+\_\+init}} (page\+\_\+t $\ast$page\+\_\+p)
+\begin{DoxyCompactList}\small\item\em Initializes the page cells to 0. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{fileio_8c_afccc99831a202e0a13c05461dec41817}{redraw}} (page\+\_\+t $\ast$page\+\_\+p, dimensions\+\_\+t $\ast$dims\+\_\+p, char $\ast$year)
+\begin{DoxyCompactList}\small\item\em Redraws/refreshes the page by clearing the window and then re-\/adding all page content that ought to be visible. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{fileio_8c_ae7e9be62d1bc35dfea6b208d3f6673f4}{page\+\_\+cleanup}} (page\+\_\+t $\ast$page\+\_\+p)
+\begin{DoxyCompactList}\small\item\em Free all cells that point to heap memory in the page. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Read/\+Write data to the configuration files. 
+
+Author Neil Kingdom Version 1.\+0 Since 10-\/25-\/2021 
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{fileio_8c_a1630426d62692f00d77a92691a8cb2ac}\label{fileio_8c_a1630426d62692f00d77a92691a8cb2ac}} 
+\index{fileio.c@{fileio.c}!check\_existing@{check\_existing}}
+\index{check\_existing@{check\_existing}!fileio.c@{fileio.c}}
+\doxysubsubsection{\texorpdfstring{check\_existing()}{check\_existing()}}
+{\footnotesize\ttfamily bool check\+\_\+existing (\begin{DoxyParamCaption}\item[{char $\ast$}]{fname }\end{DoxyParamCaption})}
+
+
+
+Checks that the current file specified by fname exists. 
+
+fname is expected to contain the relative or absolute path if the file is not located in the working directory.
+
+
+\begin{DoxyParams}{Parameters}
+{\em fname} & NULL terminated string containing absolute/relative path of the file \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{fileio_8c_a961586c68b80467e50e56355d9e0f90e}\label{fileio_8c_a961586c68b80467e50e56355d9e0f90e}} 
+\index{fileio.c@{fileio.c}!create\_config@{create\_config}}
+\index{create\_config@{create\_config}!fileio.c@{fileio.c}}
+\doxysubsubsection{\texorpdfstring{create\_config()}{create\_config()}}
+{\footnotesize\ttfamily int create\+\_\+config (\begin{DoxyParamCaption}\item[{dimensions\+\_\+t $\ast$}]{dims\+\_\+p,  }\item[{char $\ast$}]{year }\end{DoxyParamCaption})}
+
+
+
+Creates a non-\/default configuration template. 
+
+This is used to save the users active session context.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em dims\+\_\+p} & Pointer to a dimensions\+\_\+t struct \\
+\hline
+\mbox{\texttt{ in}}  & {\em year} & String representation of current year \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{fileio_8c_a0619fd13e04df25f6b84f621375d60d3}\label{fileio_8c_a0619fd13e04df25f6b84f621375d60d3}} 
+\index{fileio.c@{fileio.c}!load\_config@{load\_config}}
+\index{load\_config@{load\_config}!fileio.c@{fileio.c}}
+\doxysubsubsection{\texorpdfstring{load\_config()}{load\_config()}}
+{\footnotesize\ttfamily int load\+\_\+config (\begin{DoxyParamCaption}\item[{page\+\_\+t $\ast$}]{page\+\_\+p,  }\item[{char $\ast$}]{year }\end{DoxyParamCaption})}
+
+
+
+Loads a configuration page from the tmp/ directory. 
+
+It first searches for a config file named after the current year. If it cannot find that, it then checks for default.\+conf. If neither exist, it creates a new default.\+conf file.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em page\+\_\+p} & Pointer to a page\+\_\+t struct \\
+\hline
+\mbox{\texttt{ in}}  & {\em year} & String representation of current year \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{fileio_8c_ae7e9be62d1bc35dfea6b208d3f6673f4}\label{fileio_8c_ae7e9be62d1bc35dfea6b208d3f6673f4}} 
+\index{fileio.c@{fileio.c}!page\_cleanup@{page\_cleanup}}
+\index{page\_cleanup@{page\_cleanup}!fileio.c@{fileio.c}}
+\doxysubsubsection{\texorpdfstring{page\_cleanup()}{page\_cleanup()}}
+{\footnotesize\ttfamily int page\+\_\+cleanup (\begin{DoxyParamCaption}\item[{page\+\_\+t $\ast$}]{page\+\_\+p }\end{DoxyParamCaption})}
+
+
+
+Free all cells that point to heap memory in the page. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em page\+\_\+p} & Pointer to page\+\_\+t struct \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{fileio_8c_a8f85421a15ee6c769a71e7e788bb4d66}\label{fileio_8c_a8f85421a15ee6c769a71e7e788bb4d66}} 
+\index{fileio.c@{fileio.c}!page\_init@{page\_init}}
+\index{page\_init@{page\_init}!fileio.c@{fileio.c}}
+\doxysubsubsection{\texorpdfstring{page\_init()}{page\_init()}}
+{\footnotesize\ttfamily int page\+\_\+init (\begin{DoxyParamCaption}\item[{page\+\_\+t $\ast$}]{page\+\_\+p }\end{DoxyParamCaption})}
+
+
+
+Initializes the page cells to 0. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em page\+\_\+p} & Pointer to page\+\_\+t struct \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{fileio_8c_afccc99831a202e0a13c05461dec41817}\label{fileio_8c_afccc99831a202e0a13c05461dec41817}} 
+\index{fileio.c@{fileio.c}!redraw@{redraw}}
+\index{redraw@{redraw}!fileio.c@{fileio.c}}
+\doxysubsubsection{\texorpdfstring{redraw()}{redraw()}}
+{\footnotesize\ttfamily void redraw (\begin{DoxyParamCaption}\item[{page\+\_\+t $\ast$}]{page\+\_\+p,  }\item[{dimensions\+\_\+t $\ast$}]{dims\+\_\+p,  }\item[{char $\ast$}]{year }\end{DoxyParamCaption})}
+
+
+
+Redraws/refreshes the page by clearing the window and then re-\/adding all page content that ought to be visible. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em page\+\_\+p} & Pointer to page\+\_\+t struct \\
+\hline
+\mbox{\texttt{ in}}  & {\em dims\+\_\+p} & Pointer to dimensions\+\_\+t struct \\
+\hline
+\mbox{\texttt{ in}}  & {\em year} & String representation of current year \\
+\hline
+\end{DoxyParams}

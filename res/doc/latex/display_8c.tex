@@ -1,0 +1,114 @@
+\hypertarget{display_8c}{}\doxysection{/home/neil/devel/github/\+Nuget/src/display.c File Reference}
+\label{display_8c}\index{/home/neil/devel/github/Nuget/src/display.c@{/home/neil/devel/github/Nuget/src/display.c}}
+
+
+Initialize and display the ncurses GUI.  
+
+
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$math.\+h$>$}\newline
+{\ttfamily \#include $<$errno.\+h$>$}\newline
+{\ttfamily \#include $<$time.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}misc.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}common.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}nuget.\+h\char`\"{}}\newline
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{display_8c_a1acd18997a117eb41354a488c0ea4c3c}{init\+\_\+nuget\+\_\+ui}} (dimensions\+\_\+t $\ast$dims\+\_\+p, page\+\_\+t $\ast$page\+\_\+p)
+\begin{DoxyCompactList}\small\item\em Initialize the GUI and other data. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{display_8c_a14ac2135c773b39582d330ae231dcc9b}{calc\+\_\+cell\+\_\+dimensions}} (dimensions\+\_\+t $\ast$dims\+\_\+p)
+\begin{DoxyCompactList}\small\item\em Calculate the screen and cell width/height. \end{DoxyCompactList}\item 
+void $\ast$ \mbox{\hyperlink{display_8c_a3a39a8c9bfb4c6c735bd92abc645834b}{sdims\+\_\+watchdog}} (void $\ast$args)
+\begin{DoxyCompactList}\small\item\em Watchdog monitors screen dimensions and resizes cells if they differ. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{display_8c_aad1841d484c962c625a5bc21bd1a0337}{create\+\_\+win}} (WINDOW $\ast$win, int height, int width, int starty, int startx)
+\begin{DoxyCompactList}\small\item\em Creates a new window with the specified height, width, y pos., and x pos. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{display_8c_a0de909d6e96a87d839b9e285b600f499}\label{display_8c_a0de909d6e96a87d839b9e285b600f499}} 
+uint8\+\_\+t {\bfseries cell\+\_\+size}
+\item 
+\mbox{\Hypertarget{display_8c_aa075c600208810f35ae549940370c16d}\label{display_8c_aa075c600208810f35ae549940370c16d}} 
+WINDOW $\ast$ {\bfseries content\+\_\+win}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Initialize and display the ncurses GUI. 
+
+{\bfseries{Author\+:}} Neil Kingdom {\bfseries{version\+:}} 1.\+0 {\bfseries{since\+:}} 10-\/25-\/2021 
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{display_8c_a14ac2135c773b39582d330ae231dcc9b}\label{display_8c_a14ac2135c773b39582d330ae231dcc9b}} 
+\index{display.c@{display.c}!calc\_cell\_dimensions@{calc\_cell\_dimensions}}
+\index{calc\_cell\_dimensions@{calc\_cell\_dimensions}!display.c@{display.c}}
+\doxysubsubsection{\texorpdfstring{calc\_cell\_dimensions()}{calc\_cell\_dimensions()}}
+{\footnotesize\ttfamily void calc\+\_\+cell\+\_\+dimensions (\begin{DoxyParamCaption}\item[{dimensions\+\_\+t $\ast$}]{dims\+\_\+p }\end{DoxyParamCaption})}
+
+
+
+Calculate the screen and cell width/height. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em dims\+\_\+p} & Pointer to a dimensions struct \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{display_8c_aad1841d484c962c625a5bc21bd1a0337}\label{display_8c_aad1841d484c962c625a5bc21bd1a0337}} 
+\index{display.c@{display.c}!create\_win@{create\_win}}
+\index{create\_win@{create\_win}!display.c@{display.c}}
+\doxysubsubsection{\texorpdfstring{create\_win()}{create\_win()}}
+{\footnotesize\ttfamily void create\+\_\+win (\begin{DoxyParamCaption}\item[{WINDOW $\ast$}]{win,  }\item[{int}]{height,  }\item[{int}]{width,  }\item[{int}]{starty,  }\item[{int}]{startx }\end{DoxyParamCaption})}
+
+
+
+Creates a new window with the specified height, width, y pos., and x pos. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em win} & WINDOW struct which must point to NULL \\
+\hline
+\mbox{\texttt{ in}}  & {\em height} & The height of the window \\
+\hline
+\mbox{\texttt{ in}}  & {\em width} & The width of the window \\
+\hline
+\mbox{\texttt{ in}}  & {\em starty} & Starting y position of the window \\
+\hline
+\mbox{\texttt{ in}}  & {\em startx} & Starting x position of the window \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{display_8c_a1acd18997a117eb41354a488c0ea4c3c}\label{display_8c_a1acd18997a117eb41354a488c0ea4c3c}} 
+\index{display.c@{display.c}!init\_nuget\_ui@{init\_nuget\_ui}}
+\index{init\_nuget\_ui@{init\_nuget\_ui}!display.c@{display.c}}
+\doxysubsubsection{\texorpdfstring{init\_nuget\_ui()}{init\_nuget\_ui()}}
+{\footnotesize\ttfamily void init\+\_\+nuget\+\_\+ui (\begin{DoxyParamCaption}\item[{dimensions\+\_\+t $\ast$}]{dims\+\_\+p,  }\item[{page\+\_\+t $\ast$}]{page\+\_\+p }\end{DoxyParamCaption})}
+
+
+
+Initialize the GUI and other data. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em dims\+\_\+p} & Pointer to a dimensions struct \\
+\hline
+\mbox{\texttt{ in}}  & {\em page\+\_\+p} & Pointer to a page struct \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{display_8c_a3a39a8c9bfb4c6c735bd92abc645834b}\label{display_8c_a3a39a8c9bfb4c6c735bd92abc645834b}} 
+\index{display.c@{display.c}!sdims\_watchdog@{sdims\_watchdog}}
+\index{sdims\_watchdog@{sdims\_watchdog}!display.c@{display.c}}
+\doxysubsubsection{\texorpdfstring{sdims\_watchdog()}{sdims\_watchdog()}}
+{\footnotesize\ttfamily void $\ast$ sdims\+\_\+watchdog (\begin{DoxyParamCaption}\item[{void $\ast$}]{args }\end{DoxyParamCaption})}
+
+
+
+Watchdog monitors screen dimensions and resizes cells if they differ. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em args} & Unused \\
+\hline
+\end{DoxyParams}
