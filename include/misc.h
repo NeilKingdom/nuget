@@ -1,9 +1,11 @@
 #ifndef MISC_H
 #define MISC_H
 
+#include <stdlib.h>
+
 /* Functions */
-int get_year(void);
-int nuget_itoa(int value, char *str, int base, size_t len);
-void nuget_perror(const char *file, const char *func, int line);
+int   get_year(void);
+char *nuget_itoa(int n, size_t len);
+void  nuget_perror(const char *file, const char *func, int line);
 
 #endif

@@ -10,7 +10,7 @@ OBJ = $(patsubst %.c, $(ODIR)/%.o, $(SRC))
 
 CC = gcc
 DEBUG = -g -DDEBUG #-Werror
-CFLAGS += $(DEBUG) -I$(DDIR) -DTEMP_DIR=\"$(PROJ_DIR)/tmp/\" -Wall -Wextra -O2
+CFLAGS += $(DEBUG) -I$(DDIR) -Wall -Wextra -O2
 LDFLAGS += -lncurses -lm -lc
 BIN := nuget
 

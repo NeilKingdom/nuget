@@ -1,20 +1,20 @@
 /**
  * @file nuget.c
- * Starts the program and handles key-press events
+ * Program entry point. Contains main event loop.
  *
- * **Author:** Neil Kindom
- * **Version:** 1.0
- * **Since:** 10-25-2021
-*/
+ * @author Neil Kindom
+ * @version 1.0
+ * @since 10-25-2021
+ */
 #include <ncurses.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 
-#include "nuget.h"
-#include "misc.h"
-#include "common.h"
+#include "../include/nuget.h"
+#include "../include/misc.h"
+#include "../include/common.h"
 
 /**
  * main handles initialization of important variables, as well as the
@@ -22,9 +22,8 @@
  *
  * @param[in] argc The argument count
  * @param[in] argv The argument vector list
-*/
-int main(int argc, char *argv[])
-{
+ */
+int main(int argc, char *argv[]) {
 	char c;
    char *year = NULL;
 	unsigned tb, rb, bb, lb;  /* Boundaries: [Top, Right, Bottom, Left] */
@@ -35,18 +34,17 @@ int main(int argc, char *argv[])
 
    #if 0
    pthread_t watch_thread;
-   int err = pthread_create(&watch_thread, NULL, sdims_watchdog(NULL), NULL);
-   if (err != 0)
-   {
+   int err = pthread_create(&watch_thread, NULL, sdims_chg_callback(NULL), NULL);
+   if (err != 0) {
       fprintf(stderr, "Failed to create pthread\n");
-      nuget_perror(__FILE__, __FUNCTION__, __LINE__);
+      nuget_perror(__FILE__, __func__, __LINE__);
       return err;
    }
    #endif
 
 	init_nuget_ui(&sdims, &layout);
 
-   /* Sub 2 to leave breathing room between cells */
+   /* Subtract 2 for padding between cells */
    cell_size         = (uint8_t)(sdims.cell_width - 2);
 	cell_width        = sdims.cell_width;
 	cell_height       = sdims.cell_height;
@@ -66,96 +64,71 @@ int main(int argc, char *argv[])
 	mvchgat(y, x, cell_width, A_BOLD, 2, NULL);
 	refresh();
 
-   /* Get current year */
-   year = malloc(sizeof(char) * (4 + 1));
-   if (year == NULL)
-   {
-      fprintf(stderr, "Failed to allocate memory: %s\n", strerror(errno));
-      nuget_perror(__FILE__, __FUNCTION__, __LINE__);
-      endwin();
-      exit(NUGET_ERR);
-   }
-
    /* Convert year to a string */
-   if (NUGET_ERR == nuget_itoa(get_year(), year, 10, 4))
-   {
-      fprintf(stderr, "Divide by zero is not acceptable\n");
-      year = "ERROR";
-   }
+   year = nuget_itoa(get_year(), 4);
 
    /* Main loop */
-	while((c = getch()) != K_QUIT)
-   {
-		switch(c)
-      {
+	while ((c = getch()) != K_QUIT) {
+		switch (c) {
 			case K_ENTER:
 				;;
 				break;
-
 			case K_CURSOR_LEFT:
-               if (x > lb)
-               {
-                  /* Set previous attrs back to normal */
-                  mvchgat(cell_height, x, cell_width, A_NORMAL, 2, NULL); /* Row selected */
-                  mvchgat(y, 0, cell_width, A_NORMAL, 2, NULL); 			  /* Column selected */
-                  mvchgat(y, x, cell_width, A_NORMAL, 0, NULL); 			  /* Current cell */
-                  x -= cell_width;
+            if (x > lb) {
+               /* Set previous attrs back to normal */
+               mvchgat(cell_height, x, cell_width, A_NORMAL, 2, NULL); /* Row selected */
+               mvchgat(y, 0, cell_width, A_NORMAL, 2, NULL); 			  /* Column selected */
+               mvchgat(y, x, cell_width, A_NORMAL, 0, NULL); 			  /* Current cell */
+               x -= cell_width;
+            } else {
+               if (layout.col_offset > 0) {
+                  layout.col_offset -= 1;
                }
-               else
-               {
-                  if (layout.col_offset > 0)
-                     layout.col_offset -= 1;
-                  redraw(&layout, &sdims, year);
-               }
-				break;
+               redraw(&layout, &sdims, year);
+            }
+            break;
 
 			case K_CURSOR_DOWN:
-               if (y < bb)
-               {
+               if (y < bb) {
                   mvchgat(cell_height, x, cell_width, A_NORMAL, 2, NULL);
                   mvchgat(y, 0, cell_width, A_NORMAL, 2, NULL);
                   mvchgat(y, x, cell_width, A_NORMAL, 0, NULL);
                   y += cell_height;
-               }
-               else
-               {
-                  if (layout.row_offset < MAX_OFSCR_ROWS)
+               } else {
+                  if (layout.row_offset < MAX_OFSCR_ROWS) {
                      layout.row_offset += 1;
+                  }
                   redraw(&layout, &sdims, year);
                }
 				break;
 
 			case K_CURSOR_UP:
-               if (y > tb)
-               {
-                  mvchgat(cell_height, x, cell_width, A_NORMAL, 2, NULL);
-                  mvchgat(y, 0, cell_width, A_NORMAL, 2, NULL);
-                  mvchgat(y, x, cell_width, A_NORMAL, 0, NULL);
-                  y -= cell_height;
+            if (y > tb) {
+               mvchgat(cell_height, x, cell_width, A_NORMAL, 2, NULL);
+               mvchgat(y, 0, cell_width, A_NORMAL, 2, NULL);
+               mvchgat(y, x, cell_width, A_NORMAL, 0, NULL);
+               y -= cell_height;
+            } else {
+               if (layout.row_offset > 0) {
+                  layout.row_offset -= 1;
                }
-               else
-               {
-                  if (layout.row_offset > 0)
-                     layout.row_offset -= 1;
-                  redraw(&layout, &sdims, year);
-               }
-				break;
+               redraw(&layout, &sdims, year);
+            }
+            break;
 
 			case K_CURSOR_RIGHT:
-               if (x < rb)
-               {
-                  mvchgat(cell_height, x, cell_width, A_NORMAL, 2, NULL);
-                  mvchgat(y, 0, cell_width, A_NORMAL, 2, NULL);
-                  mvchgat(y, x, cell_width, A_NORMAL, 0, NULL);
-                  x += cell_width;
+            if (x < rb) {
+               mvchgat(cell_height, x, cell_width, A_NORMAL, 2, NULL);
+               mvchgat(y, 0, cell_width, A_NORMAL, 2, NULL);
+               mvchgat(y, x, cell_width, A_NORMAL, 0, NULL);
+               x += cell_width;
+            } else {
+               if (layout.col_offset < MAX_OFSCR_COLS) {
+                  layout.col_offset += 1;
                }
-               else
-               {
-                  if (layout.col_offset < MAX_OFSCR_COLS)
-                     layout.col_offset += 1;
-                  redraw(&layout, &sdims, year);
-               }
-				break;
+               redraw(&layout, &sdims, year);
+            }
+            break;
 
 			case K_SAVE:
             create_config(&sdims, year);
@@ -172,6 +145,7 @@ int main(int argc, char *argv[])
 
 	delwin(content_win);
 	endwin();
+
    #if 0
    (void) pthread_join(watch_thread, NULL);
    #endif

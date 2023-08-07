@@ -15,6 +15,7 @@
 /* DEF_ROWS/DEF_COLS just refer to the number of cells that get populated in defaults.conf */
 #define DEF_ROWS  15
 #define DEF_COLS  25
+#define RES_DIR   "../res/"
 #define DEF_CONF 	"default"
 #define PG_START 	"[Page Start]"
 #define PG_END	  	"[Page End]"
@@ -23,16 +24,16 @@
 #define NUL_ENTRY	" "
 #define PATH_LIM  256
 
-typedef char*  cell_data_t; 
+typedef char*  cell_data_t;
 extern uint8_t cell_size;
 
-typedef struct { 
+typedef struct {
 	uint16_t    col_offset;                                  /* Column offset of the offscreen page for drawing onscreen cells */
 	uint16_t    row_offset;                                  /* Row offset of the offscreen page for drawing onscreen cells */
 	cell_data_t page_cells[MAX_OFSCR_COLS][MAX_OFSCR_ROWS];  /* The entire offscreen page of cells loaded from conf file */
 } page_t;
 
-static char* const top_row[DEF_COLS] = { 
+static const char *top_row[DEF_COLS] = {
    "Jan Est", "Jan Act", "Feb Est", "Feb Act",
    "Mar Est", "Mar Act", "Apr Est", "Apr Act",
    "May Est", "May Act", "Jun Est", "Jun Act",
@@ -41,9 +42,9 @@ static char* const top_row[DEF_COLS] = {
    "Nov Est", "Nov Act", "Dec Est", "Dec Act",
 };
 
-static char* const first_col[DEF_ROWS] = {
+static const char *first_col[DEF_ROWS] = {
    "Profits", "", "Work", "Gifts", "Other", "",
-   "Expenses", "", "Food", "Gas", "Hair Cuts", "Clothing", "Personal", "Hobby", "Other"	
+   "Expenses", "", "Food", "Gas", "Hair Cuts", "Clothing", "Personal", "Hobby", "Other"
 };
 
 #endif /* FILEIO_H */

@@ -1,3 +1,0 @@
-- Add a testing framework
-
-- Should MAX_DATA be MAX_DATA + 1? I feel like it's unecessary since we only ever write to file stream which doesn't need null terminator anyways
