@@ -6,14 +6,16 @@
 uint8_t cell_cwidth = 0;
 
 void setup_curses(void) {
-    initscr();
-    raw();
-    noecho();
-    keypad(stdscr, TRUE);
-    start_color();
-    move(0, 0);
-    clear();
+    initscr();              /* Initialize stdscr */
+    raw();                  /* Key chords are not interpreted */
+    curs_set(0);            /* Set cursor invisible */
+    noecho();               /* Don't print typed characters */
+    start_color();          /* Enable 255 color mode */
+    keypad(stdscr, TRUE);   /* Enable special keys e.g. function keys */
+    move(0, 0);             /* Move cursor to top left */
+    clear();                /* Clear the screen */
 
+    /* Color pairs */
     init_pair(1, COLOR_WHITE, COLOR_YELLOW);
     init_pair(2, COLOR_WHITE, COLOR_BLACK);
 }

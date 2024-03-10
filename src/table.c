@@ -62,6 +62,9 @@ void destroy_table_ctx(pTableCtx_t restrict table) {
         return;
     }
 
+    table->offset_x = 0;
+    table->offset_y = 0;
+
     if (table->cells) {
         for (y = 0; y < MAX_ROWS; ++y) {
             for (x = 0; x < MAX_COLS; ++x) {
@@ -81,7 +84,7 @@ void destroy_table_ctx(pTableCtx_t restrict table) {
 void draw_cell(pTableCtx_t table, point_t location, bool selected) {
     cell_t cell = *get_cell(table, location);
 
-    mvprintw(location.y, location.x, cell);
+    mvprintw(location.y, location.x, "%s", cell);
     if (selected) {
         chgat(cell_cwidth, A_BOLD, 1, NULL);
     } else {
@@ -97,12 +100,12 @@ void update_cell_value(pTableCtx_t table, const char * restrict value, point_t l
 }
 
 void redraw_table(pTableCtx_t restrict table) {
+    bool selected;
     unsigned x, y;
 
     for (y = 0; y < table->vis_rows; ++y) {
         for (x = 0; x < table->vis_cols * cell_cwidth; x += cell_cwidth) {
-            bool selected = (y == table->cursor.y
-                && (x >= table->cursor.x && x < table->cursor.x + cell_cwidth));
+            selected = (y == table->cursor.y && x == table->cursor.x * cell_cwidth);
             draw_cell(table, (point_t){ x, y }, selected);
         }
     }
@@ -128,10 +131,17 @@ void scroll_table(pTableCtx_t restrict table, direction_t direction) {
             break;
     }
 
-    table->offset_x += x;
-    clamp_u64(&table->offset_x, 0, MAX_COLS - 1);
-    table->offset_y += y;
-    clamp_u64(&table->offset_y, 0, MAX_ROWS - 1);
+    if (x < 0 && table->offset_x > 0) {
+        --table->offset_x;
+    } else if (x > 0 && table->offset_x < MAX_COLS - 1) {
+        ++table->offset_x;
+    }
+
+    if (y < 0 && table->offset_y > 0) {
+        --table->offset_y;
+    } else if (y > 0 && table->offset_y < MAX_ROWS - 1) {
+        ++table->offset_y;
+    }
 
     clear();
     redraw_table(table);
@@ -139,8 +149,9 @@ void scroll_table(pTableCtx_t restrict table, direction_t direction) {
 
 void move_cursor(pTableCtx_t table, direction_t direction) {
     int8_t x = 0, y = 0;
-    cell_t *prev_cell = get_cell(table, table->cursor);
-    /* TODO: Remove attrs from prev_cell */
+
+    /* Remove attributes from cell under cursor prior to move */
+    chgat(cell_cwidth, A_NORMAL, 2, NULL);
 
     switch (direction) {
         case LEFT:
@@ -157,21 +168,33 @@ void move_cursor(pTableCtx_t table, direction_t direction) {
             break;
     }
 
-    table->cursor.x += x;
-    if (table->cursor.x == table->vis_cols) {
-        scroll_table(table, RIGHT);
-    } else if (table->cursor.x < 0) {
-        scroll_table(table, LEFT);
+    if (table->cursor.x > 0 && table->cursor.x < MAX_COLS - 1) {
+        if (x < 0) {
+            --table->cursor.x;
+        } else if (x > 0) {
+            ++table->cursor.x;
+        }
+    } else if (table->cursor.x == 0 || table->cursor.x == MAX_COLS - 1) {
+        if (x < 0) {
+            scroll_table(table, LEFT);
+        } else if (x > 0) {
+            scroll_table(table, RIGHT);
+        }
     }
-    clamp_u64(&table->cursor.x, 0, table->vis_cols - 1);
 
-    table->cursor.y += y;
-    if (table->cursor.y == table->vis_rows) {
-        scroll_table(table, DOWN);
-    } else if (table->cursor.y < 0) {
-        scroll_table(table, UP);
+    if (table->cursor.y > 0 && table->cursor.y < MAX_ROWS - 1) {
+        if (x < 0) {
+            --table->cursor.x;
+        } else if (x > 0) {
+            ++table->cursor.x;
+        }
+    } else if (table->cursor.y == 0 || table->cursor.y == MAX_ROWS - 1) {
+        if (y < 0) {
+            scroll_table(table, UP);
+        } else if (y > 0) {
+            scroll_table(table, DOWN);
+        }
     }
-    clamp_u64(&table->cursor.y, 0, table->vis_rows - 1);
 
     redraw_table(table);
 }
