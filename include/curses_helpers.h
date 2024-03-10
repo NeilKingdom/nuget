@@ -12,6 +12,5 @@
 /* Forward function decls */
 
 color_t hex_to_rgb(const char *hex);
-void draw_cell(tableCtx_t table, point_t location, bool selected);
 
 #endif /* CURSES_HELPERS_H */

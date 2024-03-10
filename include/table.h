@@ -17,18 +17,18 @@ typedef struct {
     uint64_t offset_y;  /* The cell's absolute y-offset */
     cursor_t cursor;    /* The cursor location (relative to top left corner) */
     cell_t  *cells;     /* 2d array of cells */
-} *tableCtx_t;
+} tableCtx_t, *pTableCtx_t;
 
 /* Forward function decls */
 
-tableCtx_t create_table_ctx(void);
-void destroy_table_ctx(tableCtx_t table);
-cell_t get_cell(tableCtx_t table, point_t location);
-void draw_cell(tableCtx_t table, point_t location, bool selected);
-void redraw_table(tableCtx_t table);
-void scroll_table(tableCtx_t table, direction_t direction);
-void move_cursor(tableCtx_t table, direction_t direction);
-void update_cell_value(tableCtx_t table, const char *value, point_t location);
+pTableCtx_t create_table_ctx(void);
+void destroy_table_ctx(pTableCtx_t table);
+cell_t *get_cell(pTableCtx_t table, point_t location);
+void draw_cell(pTableCtx_t table, point_t location, bool selected);
+void redraw_table(pTableCtx_t table);
+void scroll_table(pTableCtx_t table, direction_t direction);
+void move_cursor(pTableCtx_t table, direction_t direction);
+void update_cell_value(pTableCtx_t table, const char *value, point_t location);
 /*void load_csv_data(csv_data);*/
 /*void export_data_to_csv()*/
 double atod(const char *a);
