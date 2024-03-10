@@ -8,7 +8,7 @@ uint8_t cell_cwidth = 0;
 void setup_curses(void) {
     initscr();              /* Initialize stdscr */
     raw();                  /* Key chords are not interpreted */
-    curs_set(0);            /* Set cursor invisible */
+    //curs_set(0);            /* Set cursor invisible */
     noecho();               /* Don't print typed characters */
     start_color();          /* Enable 255 color mode */
     keypad(stdscr, TRUE);   /* Enable special keys e.g. function keys */
@@ -28,19 +28,15 @@ void handle_input(pTableCtx_t table, char c) {
     switch (c) {
         case 'h':
             move_cursor(table, LEFT);
-            draw_cell(table, table->cursor, true);
             break;
         case 'j':
             move_cursor(table, DOWN);
-            draw_cell(table, table->cursor, true);
             break;
         case 'k':
             move_cursor(table, UP);
-            draw_cell(table, table->cursor, true);
             break;
         case 'l':
             move_cursor(table, RIGHT);
-            draw_cell(table, table->cursor, true);
             break;
     }
 }
@@ -52,6 +48,7 @@ int main(int argc, char **argv) {
     /* Initialization */
     setup_curses();
     table = create_table_ctx();
+    chgat(cell_cwidth, A_BOLD, 1, NULL);
 
     update_cell_value(table, "cell 1", (point_t){ 3, 8 });
     update_cell_value(table, "cell 2", (point_t){ 4, 3 });
