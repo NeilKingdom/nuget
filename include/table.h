@@ -4,7 +4,7 @@
 #include "common.h"
 
 #define MAX_ROWS    USHRT_MAX
-#define MAX_COLS    26
+#define MAX_COLS    (pow(26, 2))
 
 extern uint8_t cell_cwidth; /* Current character width of a cell */
 typedef char *cell_t;

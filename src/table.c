@@ -1,4 +1,6 @@
 #include "../include/table.h"
+#include <sys/mman.h>
+#include <fcntl.h>
 
 /* TODO: Shift cells right and down 1 to accomodate row/col ids */
 
@@ -14,6 +16,10 @@ static void clamp_u64(uint64_t *x, uint64_t lo, uint64_t hi) {
 __attribute__((always_inline))
 static void clamp_s64(int64_t *x, int64_t lo, int64_t hi) {
     *x = ((*x < lo) ? lo : *x) > hi ? hi : *x;
+}
+
+static char *get_right_pad(cell_t cell) {
+    return NULL;
 }
 
 static char *get_center_pad(cell_t cell) {
@@ -68,13 +74,14 @@ pTableCtx_t create_table_ctx(void) {
     cell_cwidth = getmaxx(stdscr) / table->vis_cols;
 
     /* Allocate memory for cell references */
-    table->cells = malloc(MAX_ROWS * MAX_COLS * sizeof(cell_t));
+    table->cells = calloc(MAX_ROWS * MAX_COLS, sizeof(cell_t));
     if (table->cells == NULL) {
         perror("Failed to allocate memory for table cells");
         return NULL;
     }
 
     /* Allocate memory for cell contents */
+    /*
     for (y = 0; y < MAX_ROWS; ++y) {
         for (x = 0; x < MAX_COLS; ++x) {
             cell_t *cell = get_cell(table, (point_t){ x, y });
@@ -86,6 +93,7 @@ pTableCtx_t create_table_ctx(void) {
             strcpy(*cell, "");
         }
     }
+    */
 
     return table;
 }
@@ -98,15 +106,15 @@ pTableCtx_t create_table_ctx(void) {
 void draw_col_ids(pTableCtx_t restrict table) {
     char col_id[3];
     char lnibble, rnibble;
-    unsigned x, row_num, counter;
+    unsigned i, x, row_num;
     const size_t base = 26;
 
     lnibble = rnibble = table->offset_x;
 
-    for (x = 1, counter = 0, row_num = table->offset_x; x < table->vis_cols; ++x, ++counter) {
+    for (x = 1, i = 0, row_num = table->offset_x; x < table->vis_cols; ++x, ++i) {
         col_id[2] = '\0';
-        col_id[1] = ((rnibble + counter) % base) + 'A';
-        col_id[0] = ((lnibble + counter) / base) + 'A';
+        col_id[1] = ((rnibble + i) % base) + 'A';
+        col_id[0] = ((lnibble + i) / base) + 'A';
         mvprintw(0, x * cell_cwidth, "%s", col_id);
     }
 }
@@ -178,26 +186,30 @@ void draw_cell(
 
     move(location.y, location.x * cell_cwidth);
 
-    /* TODO: This centers text. Add left and right pad too */
-    if (strcmp(cell, "") != 0) {
-        switch (align) {
-            case ALIGN_LEFT:
-                fprintf(stderr, "Haven't implemented ALIGN_LEFT");
-                exit(EXIT_FAILURE);
-                break;
-            case ALIGN_CENTER:
-                padding = get_center_pad(cell);
-                break;
-            case ALIGN_RIGHT:
-                fprintf(stderr, "Haven't implemented ALIGN_RIGHT");
-                exit(EXIT_FAILURE);
-                break;
+    if (cell != NULL) {
+        if (strcmp(cell, "") != 0) {
+            switch (align) {
+                case ALIGN_CENTER:
+                    padding = get_center_pad(cell);
+                    break;
+                case ALIGN_RIGHT:
+                    /* TODO: Implement */
+                    fprintf(stderr, "Haven't implemented ALIGN_RIGHT");
+                    exit(EXIT_FAILURE);
+                    break;
+                default:
+                    break;
+            }
+
+            if (padding) {
+                printw("%s", padding);
+                free(padding);
+            }
         }
-        printw("%s", padding);
-        free(padding);
+
+        printw("%s", cell);
     }
 
-    printw("%s", cell);
     if (selected) {
         mvchgat(location.y, location.x * cell_cwidth, cell_cwidth, A_BOLD, 1, NULL);
     } else {
