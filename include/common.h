@@ -24,11 +24,20 @@ typedef struct {
     uint64_t y;
 } point_t;
 
+typedef enum Alignment {
+    ALIGN_LEFT,
+    ALIGN_CENTER,
+    ALIGN_RIGHT
+} align_t;
+
 typedef enum CardinalDirection {
     UP,
     DOWN,
     LEFT,
     RIGHT
 } direction_t;
+
+char *dtoa(const double d);
+double atod(const char *a);
 
 #endif /* COMMON_H */

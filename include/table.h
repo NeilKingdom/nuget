@@ -23,14 +23,13 @@ typedef struct {
 
 pTableCtx_t create_table_ctx(void);
 void destroy_table_ctx(pTableCtx_t table);
-cell_t *get_cell(pTableCtx_t table, point_t location);
-void draw_cell(pTableCtx_t table, point_t location, bool selected);
+cell_t *get_cell(pTableCtx_t table, const point_t location);
+void draw_row_ids(pTableCtx_t table);
+void draw_col_ids(pTableCtx_t table);
+void draw_cell(pTableCtx_t table, const point_t location, const align_t align, const bool selected);
 void redraw_table(pTableCtx_t table);
-void scroll_table(pTableCtx_t table, direction_t direction);
-void move_cursor(pTableCtx_t table, direction_t direction);
-void update_cell_value(pTableCtx_t table, const char *value, point_t location);
-/*void load_csv_data(csv_data);*/
-/*void export_data_to_csv()*/
-double atod(const char *a);
+void scroll_table(pTableCtx_t table, const direction_t direction);
+void move_cursor(pTableCtx_t table, const direction_t direction);
+void update_cell_value(pTableCtx_t table, const char *value, const point_t location);
 
 #endif /* TABLE_H */

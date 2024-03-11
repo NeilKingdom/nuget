@@ -1,18 +1,16 @@
-#include "../include/main.h"
 #include "../include/table.h"
-#include "../include/curses_helpers.h"
+#include "../include/keyboard.h"
 
 /* Externs */
 uint8_t cell_cwidth = 0;
 
-void setup_curses(void) {
+static void setup_curses(void) {
     initscr();              /* Initialize stdscr */
     raw();                  /* Key chords are not interpreted */
-    //curs_set(0);            /* Set cursor invisible */
+    curs_set(0);            /* Set cursor invisible */
     noecho();               /* Don't print typed characters */
     start_color();          /* Enable 255 color mode */
     keypad(stdscr, TRUE);   /* Enable special keys e.g. function keys */
-    move(0, 0);             /* Move cursor to top left */
     clear();                /* Clear the screen */
 
     /* Color pairs */
@@ -20,22 +18,22 @@ void setup_curses(void) {
     init_pair(2, COLOR_WHITE, COLOR_BLACK);
 }
 
-void cleanup_curses(void) {
+static void cleanup_curses(void) {
     endwin();
 }
 
-void handle_input(pTableCtx_t table, char c) {
+static void handle_input(pTableCtx_t table, char c) {
     switch (c) {
-        case 'h':
+        case XK_h:
             move_cursor(table, LEFT);
             break;
-        case 'j':
+        case XK_j:
             move_cursor(table, DOWN);
             break;
-        case 'k':
+        case XK_k:
             move_cursor(table, UP);
             break;
-        case 'l':
+        case XK_l:
             move_cursor(table, RIGHT);
             break;
     }
@@ -48,16 +46,18 @@ int main(int argc, char **argv) {
     /* Initialization */
     setup_curses();
     table = create_table_ctx();
-    chgat(cell_cwidth, A_BOLD, 1, NULL);
 
-    update_cell_value(table, "cell 1", (point_t){ 3, 8 });
-    update_cell_value(table, "cell 2", (point_t){ 4, 3 });
-    update_cell_value(table, "cell 3", (point_t){ 8, 9 });
+    draw_row_ids(table);
+    draw_col_ids(table);
+
+    move(0, 0); /* Move cursor to top left */
+    chgat(cell_cwidth, A_BOLD, 1, NULL);
+    redraw_table(table);
 
     /* Main program loop */
     while ((c = getch()) != 'q') {
-        redraw_table(table);
         handle_input(table, c);
+        redraw_table(table);
     }
 
     /* Cleanup */
