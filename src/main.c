@@ -1,25 +1,41 @@
 #include "../include/table.h"
+#include "../include/curses_helpers.h"
 #include "../include/keyboard.h"
+#include <ncurses.h>
 
 /* Externs */
 uint8_t cell_cwidth = 0;
 
+static void cleanup_curses(void) {
+    endwin();
+}
+
 static void setup_curses(void) {
-    initscr();              /* Initialize stdscr */
+    initscr(); /* Initialize default window (stdscr) */
+
+    if (!has_colors()) {
+        fprintf(stderr, "Sorry boomer. You'll need a terminal that's not from 1970 for this program\n");
+        cleanup_curses();
+        exit(EXIT_FAILURE);
+    } else {
+        start_color(); /* Enable 255 color mode */
+    }
+
+    /* Color pairs */
+    init_pair(DEFAULT, DEFAULT_PAIR);
+    init_pair(PRIMARY, PRIMARY_PAIR);
+    init_pair(PRIMARY_INV, PRIMARY_INV_PAIR);
+    init_pair(SECONDARY, SECONDARY_PAIR);
+    init_pair(SECONDARY_INV, SECONDARY_INV_PAIR);
+    init_pair(CURSOR, CURSOR_PAIR);
+
+    /* TTY setup */
     raw();                  /* Key chords are not interpreted */
     curs_set(0);            /* Set cursor invisible */
     noecho();               /* Don't print typed characters */
-    start_color();          /* Enable 255 color mode */
-    keypad(stdscr, TRUE);   /* Enable special keys e.g. function keys */
-    clear();                /* Clear the screen */
+    keypad(stdscr, true);   /* Enable special keys e.g. function keys */
 
-    /* Color pairs */
-    init_pair(1, COLOR_WHITE, COLOR_YELLOW);
-    init_pair(2, COLOR_WHITE, COLOR_BLACK);
-}
-
-static void cleanup_curses(void) {
-    endwin();
+    clear(); /* Clear the screen */
 }
 
 static void handle_input(pTableCtx_t table, char c) {
@@ -49,6 +65,8 @@ int main(int argc, char **argv) {
 
     draw_row_ids(table);
     draw_col_ids(table);
+
+    update_cell_value(table, "test", (point_t){ 0, 0 });
 
     move(0, 0); /* Move cursor to top left */
     chgat(cell_cwidth, A_BOLD, 1, NULL);

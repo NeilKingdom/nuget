@@ -45,3 +45,12 @@ color_t hex_to_rgb(const char *hex) {
 
     return color;
 }
+
+void color_cell(
+    pTableCtx_t restrict table,
+    const point_t location,
+    const nuget_col_t col_pair,
+    const uint64_t attrs
+) {
+    mvchgat(location.y, location.x * cell_cwidth, cell_cwidth, attrs, col_pair, NULL);
+}

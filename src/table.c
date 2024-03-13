@@ -1,8 +1,12 @@
-#include "../include/table.h"
-#include <sys/mman.h>
-#include <fcntl.h>
+#include "../include/curses_helpers.h"
 
-/* TODO: Shift cells right and down 1 to accomodate row/col ids */
+/*
+ * TODO:
+ * - Shift cells right and down 1 to accomodate row/col ids
+ * - Proper error handling
+ * - [out/in] tags for doxygen
+ */
+
 
 /*==============================
         Private Functions
@@ -80,21 +84,6 @@ pTableCtx_t create_table_ctx(void) {
         return NULL;
     }
 
-    /* Allocate memory for cell contents */
-    /*
-    for (y = 0; y < MAX_ROWS; ++y) {
-        for (x = 0; x < MAX_COLS; ++x) {
-            cell_t *cell = get_cell(table, (point_t){ x, y });
-            *cell = malloc(cell_cwidth + 1);
-            if (*cell == NULL) {
-                perror("Failed to allocate memory for cell");
-                return NULL;
-            }
-            strcpy(*cell, "");
-        }
-    }
-    */
-
     return table;
 }
 
@@ -109,6 +98,7 @@ void draw_col_ids(pTableCtx_t restrict table) {
     unsigned i, x, row_num;
     const size_t base = 26;
 
+    /* TODO: Broken */
     lnibble = rnibble = table->offset_x;
 
     for (x = 1, i = 0, row_num = table->offset_x; x < table->vis_cols; ++x, ++i) {
@@ -116,6 +106,12 @@ void draw_col_ids(pTableCtx_t restrict table) {
         col_id[1] = ((rnibble + i) % base) + 'A';
         col_id[0] = ((lnibble + i) / base) + 'A';
         mvprintw(0, x * cell_cwidth, "%s", col_id);
+
+        if (x == table->cursor.x) {
+            color_cell(table, (point_t){ x, 0 }, PRIMARY_INV, A_BOLD);
+        } else {
+            color_cell(table, (point_t){ x, 0 }, PRIMARY, A_BOLD);
+        }
     }
 }
 
@@ -133,6 +129,12 @@ void draw_row_ids(pTableCtx_t restrict table) {
         row_id = dtoa(row_num);
         mvprintw(y, 0, "%s", row_id);
         free(row_id);
+
+        if (y == table->cursor.y) {
+            color_cell(table, (point_t){ 0, y }, PRIMARY_INV, A_BOLD);
+        } else {
+            color_cell(table, (point_t){ 0, y }, PRIMARY, A_BOLD);
+        }
     }
 }
 
@@ -184,36 +186,34 @@ void draw_cell(
     char *padding = NULL;
     cell_t cell = *get_cell(table, location);
 
-    move(location.y, location.x * cell_cwidth);
+    move(location.y + 1, (location.x + 1) * cell_cwidth);
 
     if (cell != NULL) {
-        if (strcmp(cell, "") != 0) {
-            switch (align) {
-                case ALIGN_CENTER:
-                    padding = get_center_pad(cell);
-                    break;
-                case ALIGN_RIGHT:
-                    /* TODO: Implement */
-                    fprintf(stderr, "Haven't implemented ALIGN_RIGHT");
-                    exit(EXIT_FAILURE);
-                    break;
-                default:
-                    break;
-            }
+        switch (align) {
+            case ALIGN_CENTER:
+                padding = get_center_pad(cell);
+                break;
+            case ALIGN_RIGHT:
+                /* TODO: Implement */
+                fprintf(stderr, "Haven't implemented ALIGN_RIGHT");
+                exit(EXIT_FAILURE);
+                break;
+            default:
+                break;
+        }
 
-            if (padding) {
-                printw("%s", padding);
-                free(padding);
-            }
+        if (padding) {
+            printw("%s", padding);
+            free(padding);
         }
 
         printw("%s", cell);
     }
 
     if (selected) {
-        mvchgat(location.y, location.x * cell_cwidth, cell_cwidth, A_BOLD, 1, NULL);
+        color_cell(table, location, CURSOR, A_BOLD);
     } else {
-        mvchgat(location.y, location.x * cell_cwidth, cell_cwidth, A_NORMAL, 2, NULL);
+        color_cell(table, location, DEFAULT, A_NORMAL);
     }
 }
 
@@ -230,9 +230,12 @@ void update_cell_value(
     const point_t location
 ) {
     cell_t *cell = get_cell(table, location);
-    *cell = realloc(*cell, cell_cwidth + 1);
+    *cell = realloc((void*)*cell, (cell_cwidth + 1) * sizeof(char));
+    if (*cell == NULL) {
+        perror("Failed to allocate memory for cell");
+        exit(EXIT_FAILURE);
+    }
     strncpy(*cell, value, cell_cwidth);
-    *cell[cell_cwidth] = '\0';
 }
 
 /**
