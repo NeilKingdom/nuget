@@ -1,10 +1,10 @@
 #include "../include/curses_helpers.h"
 
-color_t hex_to_rgb(const char *hex) {
+Color_t hex_to_rgb(const char *hex) {
     const size_t hb_width = 2; /* Hex byte width */
     size_t bad_range;
     unsigned i;
-    color_t color = { 0 };
+    Color_t color = { 0 };
     char *r = alloca(hb_width + 1);
     char *g = alloca(hb_width + 1);
     char *b = alloca(hb_width + 1);
@@ -46,11 +46,6 @@ color_t hex_to_rgb(const char *hex) {
     return color;
 }
 
-void color_cell(
-    pTableCtx_t restrict table,
-    const point_t location,
-    const nuget_col_t col_pair,
-    const uint64_t attrs
-) {
+void color_cell(const Point_t location, const NugetCol_t col_pair, const uint64_t attrs) {
     mvchgat(location.y, location.x * cell_cwidth, cell_cwidth, attrs, col_pair, NULL);
 }

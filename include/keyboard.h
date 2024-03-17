@@ -5,11 +5,11 @@
 #include <X11/keysym.h>
 
 typedef int key_t;
-typedef void (*keychrd_cb)(pTableCtx_t table, void *data);
+typedef void (*keychord_cb)(pTableCtx_t table, void *data);
 
 typedef struct {
-    key_t seq[2];       /* The sequence of keys that make up the chord */
-    keychrd_cb action;  /* A callback to be performed when the sequence is completed */
+    key_t       seq[2];     /* The sequence of keys that make up the chord */
+    keychord_cb action;     /* A callback to be performed when the sequence is completed */
 } keychrd_t;
 
 /* TODO: Think of better name */

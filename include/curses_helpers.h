@@ -6,14 +6,14 @@
 
 #define ELIPSES "..."
 
-typedef enum NugetColor {
+typedef enum {
     DEFAULT = 1,    /* Default/background color pair */
     PRIMARY,        /* Primary color pair */
     PRIMARY_INV,    /* Primary color pair (inverted) */
     SECONDARY,      /* Secondary color pair */
     SECONDARY_INV,  /* Secondary color pair (inverted) */
     CURSOR,         /* Cursor color pair */
-} nuget_col_t;
+} NugetCol_t;
 
 #define TEXT_COLOR          COLOR_WHITE
 #define BG_COLOR            COLOR_BLACK
@@ -30,7 +30,7 @@ typedef enum NugetColor {
 
 /* Forward function decls */
 
-color_t hex_to_rgb(const char *hex);
-void color_cell(pTableCtx_t table, const point_t location, const nuget_col_t col_pair, const uint64_t attrs);
+Color_t     hex_to_rgb(const char *hex);
+void        color_cell(const Point_t location, const NugetCol_t col_pair, const uint64_t attrs);
 
 #endif /* CURSES_HELPERS_H */

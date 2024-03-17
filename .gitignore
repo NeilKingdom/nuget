@@ -1,2 +1,4 @@
+.clangd
+compile_flags.txt
 obj
 nuget

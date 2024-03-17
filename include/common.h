@@ -17,27 +17,27 @@ typedef struct {
     uint8_t r;
     uint8_t g;
     uint8_t b;
-} color_t;
+} Color_t;
 
 typedef struct {
     uint64_t x;
     uint64_t y;
-} point_t;
+} Point_t;
 
-typedef enum Alignment {
+typedef enum {
     ALIGN_LEFT,
     ALIGN_CENTER,
     ALIGN_RIGHT
-} align_t;
+} Align_t;
 
-typedef enum CardinalDirection {
+typedef enum {
     UP,
     DOWN,
     LEFT,
     RIGHT
-} direction_t;
+} Direction_t;
 
-char *dtoa(const double d);
-double atod(const char *a);
+char        *dtoa(const double d);
+double      atod(const char *a);
 
 #endif /* COMMON_H */

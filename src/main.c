@@ -1,6 +1,6 @@
-#include "../include/table.h"
-#include "../include/curses_helpers.h"
-#include "../include/keyboard.h"
+#include "table.h"
+#include "curses_helpers.h"
+#include "keyboard.h"
 #include <ncurses.h>
 
 /* Externs */
@@ -14,7 +14,7 @@ static void setup_curses(void) {
     initscr(); /* Initialize default window (stdscr) */
 
     if (!has_colors()) {
-        fprintf(stderr, "Sorry boomer. You'll need a terminal that's not from 1970 for this program\n");
+        fprintf(stderr, "Sorry boomer. You'll need a terminal written later than 1970 for this program\n");
         cleanup_curses();
         exit(EXIT_FAILURE);
     } else {
@@ -63,20 +63,12 @@ int main(int argc, char **argv) {
     setup_curses();
     table = create_table_ctx();
 
-    draw_row_ids(table);
-    draw_col_ids(table);
-
-    update_cell_value(table, "test", (point_t){ 0, 0 });
-
-    move(0, 0); /* Move cursor to top left */
-    chgat(cell_cwidth, A_BOLD, 1, NULL);
-    redraw_table(table);
-
     /* Main program loop */
-    while ((c = getch()) != 'q') {
-        handle_input(table, c);
+    do {
         redraw_table(table);
+        handle_input(table, c);
     }
+    while ((c = getch()) != 'q');
 
     /* Cleanup */
     destroy_table_ctx(table);

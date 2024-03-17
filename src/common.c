@@ -1,4 +1,4 @@
-#include "../include/common.h"
+#include "common.h"
 
 char *dtoa(const double d) {
     int tmp = d;

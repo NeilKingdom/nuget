@@ -1,4 +1,4 @@
-#include "../include/curses_helpers.h"
+#include "table.h"
 
 /*
  * TODO:
@@ -6,7 +6,6 @@
  * - Proper error handling
  * - [out/in] tags for doxygen
  */
-
 
 /*==============================
         Private Functions
@@ -22,11 +21,11 @@ static void clamp_s64(int64_t *x, int64_t lo, int64_t hi) {
     *x = ((*x < lo) ? lo : *x) > hi ? hi : *x;
 }
 
-static char *get_right_pad(cell_t cell) {
+static char *get_right_pad(cell_t restrict cell) {
     return NULL;
 }
 
-static char *get_center_pad(cell_t cell) {
+static char *get_center_pad(cell_t restrict cell) {
     size_t pad_size;
     char *padding = NULL;
 
@@ -49,7 +48,7 @@ static char *get_center_pad(cell_t cell) {
  * @param location The location of the cell that will be returned
  * @returns A reference to the cell located at location
  */
-cell_t *get_cell(pTableCtx_t table, const point_t location) {
+cell_t *get_cell(pTableCtx_t restrict table, const Point_t location) {
     unsigned x, y;
     x = location.x + table->offset_x;
     y = (location.y + table->offset_y) * MAX_COLS;
@@ -108,9 +107,9 @@ void draw_col_ids(pTableCtx_t restrict table) {
         mvprintw(0, x * cell_cwidth, "%s", col_id);
 
         if (x == table->cursor.x) {
-            color_cell(table, (point_t){ x, 0 }, PRIMARY_INV, A_BOLD);
+            color_cell((Point_t){ x, 0 }, PRIMARY_INV, A_BOLD);
         } else {
-            color_cell(table, (point_t){ x, 0 }, PRIMARY, A_BOLD);
+            color_cell((Point_t){ x, 0 }, PRIMARY, A_BOLD);
         }
     }
 }
@@ -131,9 +130,9 @@ void draw_row_ids(pTableCtx_t restrict table) {
         free(row_id);
 
         if (y == table->cursor.y) {
-            color_cell(table, (point_t){ 0, y }, PRIMARY_INV, A_BOLD);
+            color_cell((Point_t){ 0, y }, PRIMARY_INV, A_BOLD);
         } else {
-            color_cell(table, (point_t){ 0, y }, PRIMARY, A_BOLD);
+            color_cell((Point_t){ 0, y }, PRIMARY, A_BOLD);
         }
     }
 }
@@ -156,7 +155,7 @@ void destroy_table_ctx(pTableCtx_t restrict table) {
     if (table->cells) {
         for (y = 0; y < MAX_ROWS; ++y) {
             for (x = 0; x < MAX_COLS; ++x) {
-                cell_t *cell = get_cell(table, (point_t){ x, y });
+                cell_t *cell = get_cell(table, (Point_t){ x, y });
                 if (*cell) {
                     free(*cell);
                 }
@@ -179,8 +178,8 @@ void destroy_table_ctx(pTableCtx_t restrict table) {
  */
 void draw_cell(
     pTableCtx_t restrict table,
-    const point_t location,
-    const align_t align,
+    const Point_t location,
+    const Align_t align,
     const bool selected
 ) {
     char *padding = NULL;
@@ -211,9 +210,9 @@ void draw_cell(
     }
 
     if (selected) {
-        color_cell(table, location, CURSOR, A_BOLD);
+        color_cell(location, CURSOR, A_BOLD);
     } else {
-        color_cell(table, location, DEFAULT, A_NORMAL);
+        color_cell(location, DEFAULT, A_NORMAL);
     }
 }
 
@@ -227,13 +226,15 @@ void draw_cell(
 void update_cell_value(
     pTableCtx_t restrict table,
     const char * restrict value,
-    const point_t location
+    const Point_t location
 ) {
     cell_t *cell = get_cell(table, location);
-    *cell = realloc((void*)*cell, (cell_cwidth + 1) * sizeof(char));
     if (*cell == NULL) {
-        perror("Failed to allocate memory for cell");
-        exit(EXIT_FAILURE);
+        *cell = malloc((cell_cwidth + 1) * sizeof(char));
+        if (*cell == NULL) {
+            perror("Failed to allocate memory for cell");
+            exit(EXIT_FAILURE);
+        }
     }
     strncpy(*cell, value, cell_cwidth);
 }
@@ -250,7 +251,7 @@ void redraw_table(pTableCtx_t restrict table) {
     for (y = 0; y < table->vis_rows; ++y) {
         for (x = 0; x < table->vis_cols; ++x) {
             selected = (y == table->cursor.y && x == table->cursor.x);
-            draw_cell(table, (point_t){ x, y }, ALIGN_CENTER, selected);
+            draw_cell(table, (Point_t){ x, y }, ALIGN_CENTER, selected);
         }
     }
 
@@ -266,7 +267,7 @@ void redraw_table(pTableCtx_t restrict table) {
  * @param table The table context object
  * @param direction The cardinal direction in which to scroll the table
  */
-void scroll_table(pTableCtx_t restrict table, const direction_t direction) {
+void scroll_table(pTableCtx_t restrict table, const Direction_t direction) {
     switch (direction) {
         case LEFT:
             if (table->offset_x > 0) {
@@ -300,7 +301,7 @@ void scroll_table(pTableCtx_t restrict table, const direction_t direction) {
  * @param table The table context object
  * @param direction The cardinal direction in which to scroll the table
  */
-void move_cursor(pTableCtx_t restrict table, const direction_t direction) {
+void move_cursor(pTableCtx_t restrict table, const Direction_t direction) {
     switch (direction) {
         case LEFT:
             if (table->cursor.x > 0) {
