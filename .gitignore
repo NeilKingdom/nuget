@@ -1,4 +1,6 @@
 .clangd
 compile_flags.txt
+compile_flags.txt.bkp
+compile_commands.json
 obj
 nuget
