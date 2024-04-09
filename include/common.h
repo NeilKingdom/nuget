@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <math.h>
+#include <stdarg.h>
 #include <ctype.h>
 #include <ncurses.h>
 

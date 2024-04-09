@@ -3,4 +3,6 @@
 
 #include "common.h"
 
+extern bool quit_nuget;
+
 #endif /* MAIN_H */

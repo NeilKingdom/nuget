@@ -25,14 +25,13 @@ typedef struct {
 /* Forward function decls */
 
 pTableCtx_t create_table_ctx(void);
-void destroy_table_ctx(pTableCtx_t table);
-cell_t *get_cell(pTableCtx_t table, const Point_t location);
-void draw_row_ids(pTableCtx_t table);
-void draw_col_ids(pTableCtx_t table);
-void draw_cell(pTableCtx_t table, const Point_t location, const Align_t align, const bool selected);
-void redraw_table(pTableCtx_t table);
-void scroll_table(pTableCtx_t table, const Direction_t direction);
-void move_cursor(pTableCtx_t table, const Direction_t direction);
-void update_cell_value(pTableCtx_t table, const char *value, const Point_t location);
+void        destroy_table_ctx(pTableCtx_t table);
+cell_t     *get_cell_value(pTableCtx_t table, const Point_t location);
+void        set_cell_value(pTableCtx_t table, const char *value, const Point_t location);
+void        draw_row_ids(pTableCtx_t table);
+void        draw_col_ids(pTableCtx_t table);
+void        draw_cell(pTableCtx_t table, const Point_t location, const Align_t align, const bool selected);
+void        redraw_table(pTableCtx_t table);
+void        scroll_table(pTableCtx_t table, const Direction_t direction);
 
 #endif /* TABLE_H */

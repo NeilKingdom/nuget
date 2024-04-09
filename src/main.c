@@ -4,7 +4,7 @@
 
 /* Externs */
 uint8_t cell_cwidth = 0;
-Mode_t  curr_mode = NORMAL;
+bool    quit_nuget = false;
 
 static void cleanup_curses(void) {
     endwin();
@@ -30,39 +30,76 @@ static void setup_curses(void) {
     init_pair(CURSOR, CURSOR_PAIR);
 
     /* TTY setup */
-    raw();                  /* Key chords are not interpreted */
+    raw();                  /* Disables input buffering and POSIX signals */
     curs_set(0);            /* Set cursor invisible */
-    noecho();               /* Don't print typed characters */
+    noecho();               /* Don't echo typed characters to the TTY */
     keypad(stdscr, true);   /* Enable special keys e.g. function keys */
 
     clear(); /* Clear the screen */
 }
 
-static void handle_input(pTableCtx_t table, char c) {
-    switch (c) {
-        case XK_h:
-            move_cursor(table, LEFT);
+static void exec_kc_callback(
+    pTableCtx_t restrict table,
+    keysym_t *cbuf,
+    KeyChord_t *bindings,
+    const size_t bindings_sz
+) {
+    unsigned i, j;
+    bool is_equal;
+
+    for (i = 0; i < bindings_sz; ++i) {
+        is_equal = false;
+
+        for (j = 0; j < KEYSTROKE_MAX; ++j) {
+            if (bindings[i].seq[j] != cbuf[j]) {
+                is_equal = false;
+                break;
+            }
+
+            is_equal = true;
+        }
+
+        if (is_equal) {
+            kc_callback func = bindings[i].func;
+            void **args = bindings[i].args;
+            func(table, args);
+        }
+    }
+}
+
+static void handle_keystroke(pTableCtx_t restrict table) {
+    int c;
+    unsigned i = 0;
+    size_t bindings_sz;
+    keysym_t cbuf[KEYSTROKE_MAX] = { 0 };
+
+    /* Queue keystrokes */
+    while (i++ < KEYSTROKE_MAX && (c = getch()) != ERR) {
+        cbuf[i] = (keysym_t)c;
+        timeout(100);
+    }
+
+    timeout(0);
+
+    /* Find and execute callback for the matching binding */
+
+    switch (curr_mode) {
+        case NORMAL:
+            bindings_sz = sizeof(norm_bindings) / sizeof(norm_bindings[0]);
+            exec_kc_callback(table, cbuf, norm_bindings, bindings_sz);
             break;
-        case XK_j:
-            move_cursor(table, DOWN);
+        case INSERT:
+            bindings_sz = sizeof(ins_bindings) / sizeof(ins_bindings[0]);
+            exec_kc_callback(table, cbuf, ins_bindings, bindings_sz);
             break;
-        case XK_k:
-            move_cursor(table, UP);
-            break;
-        case XK_l:
-            move_cursor(table, RIGHT);
-            break;
-        case XK_i:
-            insert_mode();
-            break;
-        case XK_Escape:
-            normal_mode();
+        case VISUAL:
+            bindings_sz = sizeof(vis_bindings) / sizeof(vis_bindings[0]);
+            exec_kc_callback(table, cbuf, vis_bindings, bindings_sz);
             break;
     }
 }
 
 int main(int argc, char **argv) {
-    char c;
     pTableCtx_t table = NULL;
 
     /* Initialization */
@@ -72,8 +109,8 @@ int main(int argc, char **argv) {
     /* Main program loop */
     do {
         redraw_table(table);
-        handle_input(table, c);
-    } while ((c = getch()) != 'q');
+        handle_keystroke(table);
+    } while (!quit_nuget);
 
     /* Cleanup */
     destroy_table_ctx(table);
