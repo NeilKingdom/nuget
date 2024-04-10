@@ -6,6 +6,7 @@
 #include <X11/keysym.h>
 
 #define KEYSTROKE_MAX 10
+#define XK_NULL 0
 
 typedef uint16_t keysym_t;
 typedef void (*kc_callback)(pTableCtx_t table, void **args);
@@ -17,7 +18,6 @@ typedef enum {
 } Mode_t;
 
 static Mode_t curr_mode = NORMAL;   /* Current vim mode */
-static int kc_timeout = 4;          /* Timeout between keystrokes in 10ths of a second */
 
 typedef struct {
     keysym_t    seq[KEYSTROKE_MAX]; /* The sequence of keys that make up the chord (NULL-terminated) */
@@ -37,12 +37,22 @@ static void normal_mode(pTableCtx_t restrict table, void **args) {
 
 static void jump_to_top(pTableCtx_t restrict table, void **args) {
     table->offset_y = 0;
-    redraw_table(table);
 }
 
 static void jump_to_bottom(pTableCtx_t restrict table, void **args) {
-    table->offset_y = MAX_ROWS - table->vis_cols;
-    redraw_table(table);
+    table->offset_y = MAX_ROWS - table->vis_rows;
+}
+
+static void page_down(pTableCtx_t restrict table, void **args) {
+    if (table->offset_y < MAX_ROWS - table->vis_rows) {
+        table->offset_y += table->vis_rows;
+    }
+}
+
+static void page_up(pTableCtx_t restrict table, void **args) {
+    if (table->offset_y > table->vis_rows) {
+        table->offset_y -= table->vis_rows;
+    }
 }
 
 static void quit(pTableCtx_t restrict table, void **args) {
@@ -89,8 +99,6 @@ static void move_cursor(pTableCtx_t restrict table, void **args) {
             }
             break;
     }
-
-    redraw_table(table);
 }
 
 /*** Bindings ***/
@@ -102,19 +110,21 @@ Direction_t down = DOWN;
 
 /* Normal mode bindings */
 static KeyChord_t norm_bindings[] = {
-    { .seq = { XK_i, '\0' },       .func = insert_mode,       .args = NULL },
-    { .seq = { XK_h, '\0' },       .func = move_cursor,       .args = { &left } },
-    { .seq = { XK_j, '\0' },       .func = move_cursor,       .args = { &down } },
-    { .seq = { XK_k, '\0' },       .func = move_cursor,       .args = { &up } },
-    { .seq = { XK_l, '\0' },       .func = move_cursor,       .args = { &right } },
-    { .seq = { XK_q, '\0' },       .func = quit,              .args = NULL },
-    { .seq = { XK_g, XK_g, '\0' }, .func = jump_to_top,       .args = NULL },
-    { .seq = { XK_g, XK_G, '\0' }, .func = jump_to_bottom,    .args = NULL },
+    { .seq = { XK_i, XK_NULL },                 .func = insert_mode,       .args = NULL },
+    { .seq = { XK_h, XK_NULL },                 .func = move_cursor,       .args = { &left } },
+    { .seq = { XK_j, XK_NULL },                 .func = move_cursor,       .args = { &down } },
+    { .seq = { XK_k, XK_NULL },                 .func = move_cursor,       .args = { &up } },
+    { .seq = { XK_l, XK_NULL },                 .func = move_cursor,       .args = { &right } },
+    { .seq = { XK_Z, XK_Z, XK_NULL },           .func = quit,              .args = NULL },
+    { .seq = { XK_g, XK_g, XK_NULL },           .func = jump_to_top,       .args = NULL },
+    { .seq = { XK_g, XK_G, XK_NULL },           .func = jump_to_bottom,    .args = NULL },
+    { .seq = { XK_Control_L, XK_f, XK_NULL },   .func = page_down,         .args = NULL },
+    { .seq = { XK_Control_L, XK_b, XK_NULL },   .func = page_up,           .args = NULL },
 };
 
 /* Insert mode bindings */
 static KeyChord_t ins_bindings[] = {
-    { .seq = { XK_Escape, '\0' },  .func = normal_mode,       .args = NULL },
+    { .seq = { XK_Escape, XK_NULL },  .func = normal_mode,       .args = NULL },
 };
 
 /* Visual mode bindings */

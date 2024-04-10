@@ -48,7 +48,7 @@ static char *get_center_pad(cell_t restrict cell) {
  * @param location The location of the cell that will be returned
  * @returns A reference to the cell located at location
  */
-cell_t *get_cell(pTableCtx_t restrict table, const Point_t location) {
+cell_t *get_cell_value(pTableCtx_t restrict table, const Point_t location) {
     unsigned x, y;
     x = location.x + table->offset_x;
     y = (location.y + table->offset_y) * MAX_COLS;
@@ -155,7 +155,7 @@ void destroy_table_ctx(pTableCtx_t restrict table) {
     if (table->cells) {
         for (y = 0; y < MAX_ROWS; ++y) {
             for (x = 0; x < MAX_COLS; ++x) {
-                cell_t *cell = get_cell(table, (Point_t){ x, y });
+                cell_t *cell = get_cell_value(table, (Point_t){ x, y });
                 if (*cell) {
                     free(*cell);
                 }
@@ -183,7 +183,7 @@ void draw_cell(
     const bool selected
 ) {
     char *padding = NULL;
-    cell_t cell = *get_cell(table, location);
+    cell_t cell = *get_cell_value(table, location);
 
     move(location.y + 1, (location.x + 1) * cell_cwidth);
 
@@ -223,12 +223,12 @@ void draw_cell(
  * @param value The new value (text) to update the cell with
  * @param location The location of the cell that shall be updated
  */
-void update_cell_value(
+void set_cell_value(
     pTableCtx_t restrict table,
     const char * restrict value,
     const Point_t location
 ) {
-    cell_t *cell = get_cell(table, location);
+    cell_t *cell = get_cell_value(table, location);
     if (*cell == NULL) {
         *cell = malloc((cell_cwidth + 1) * sizeof(char));
         if (*cell == NULL) {
