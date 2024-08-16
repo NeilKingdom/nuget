@@ -1,4 +1,8 @@
 #include "main.h"
+#include "keyboard.h"
+
+#include <signal.h>
+#include <time.h>
 
 /* Externs */
 uint8_t cell_cwidth = 0;
@@ -40,7 +44,6 @@ static void exec_kc_callback(
     pTableCtx_t restrict table,
     const keysym_t *seq
 ) {
-    bool is_equal;
     unsigned i, j;
     size_t bsize;
     KeyChord_t *binds = NULL;
@@ -61,22 +64,7 @@ static void exec_kc_callback(
     }
 
     for (i = 0; i < bsize; ++i) {
-        is_equal = false;
-
-        for (j = 0; j < KEYSTROKE_MAX; ++j) {
-            if (binds[i].seq[j] == XK_NULL || seq[j] == XK_NULL) {
-                break;
-            }
-
-            if (binds[i].seq[j] != seq[j]) {
-                is_equal = false;
-                break;
-            }
-
-            is_equal = true;
-        }
-
-        if (is_equal) {
+        if (memcmp(binds[i].seq, seq, KEYSTROKE_MAX) == 0) {
             kc_callback func = binds[i].func;
             void **args = binds[i].args;
             func(table, args);
@@ -85,14 +73,7 @@ static void exec_kc_callback(
     }
 }
 
-/**
- * @brief Tries to find a binding for the current mode that begins with seq
- * @since 09-04-2024
- * @param seq The beginning sequence of keystrokes to search for in each binding
- * @returns True if a matching binding exists, or false otherwise
- */
-static bool find_matching_bind(const keysym_t *seq, const size_t seq_size) {
-    bool matches;
+static bool match_count(const keysym_t *seq) {
     unsigned i, j;
     size_t bsize;
     KeyChord_t *binds = NULL;
@@ -113,41 +94,67 @@ static bool find_matching_bind(const keysym_t *seq, const size_t seq_size) {
     }
 
     for (i = 0; i < bsize; ++i) {
-        matches = true;
-
-        for (j = 0; j < seq_size; ++j) {
-            if (binds[i].seq[j] != seq[j]) {
-                matches = false;
-                break;
-            }
-        }
-
-        if (matches) {
-            break;
+        if (memcmp(binds[i].seq, seq, KEYSTROKE_MAX) == 0) {
+            return true;
         }
     }
 
-    return matches;
+    return false;
+}
+
+static bool block;
+
+void timer_done(union sigval sig) {
+    block = false;
 }
 
 static void handle_input(pTableCtx_t restrict table) {
     int c;
     size_t bsize;
     unsigned i = 0;
-    keysym_t seq[KEYSTROKE_MAX] = { 0 };
+    keysym_t seq[KEYSTROKE_MAX] = { XK_NULL };
+
+    int status;
+    timer_t timer_id;
+    block = true;
+
+    struct itimerspec tspec = {
+        .it_interval = { .tv_sec = 0, .tv_nsec = 100 * 1000 * 1000 },
+        .it_value    = { .tv_sec = 0, .tv_nsec = 100 * 1000 * 1000 }
+    };
+
+    struct sigevent evt = {
+        .sigev_notify = SIGEV_THREAD,
+        .sigev_notify_function = timer_done
+    };
+
+    status = timer_create(CLOCK_MONOTONIC, &evt, &timer_id);
+    if (status != 0) {
+        perror("timer_create");
+        exit(EXIT_FAILURE);
+    }
+
+    status = timer_settime(timer_id, 0, &tspec, NULL);
+    if (status != 0) {
+        perror("timer_settime");
+        exit(EXIT_FAILURE);
+    }
 
     /* Buffer keystrokes */
-    while (i < KEYSTROKE_MAX && (c = getch()) != ERR) {
-        seq[i++] = (keysym_t)c;
-        if (!find_matching_bind(seq, i)) {
+    while (i < KEYSTROKE_MAX) {
+        if (!block) {
             break;
         }
-        timeout(100);
+
+        seq[i++] = (keysym_t)getch();
+        timer_settime(timer_id, 0, &tspec, NULL);
+        usleep(100 * 1000);
     }
-    timeout(0);
 
     /* Find and execute callback if a matching bind exists */
     exec_kc_callback(table, seq);
+
+    timer_delete(timer_id);
 }
 
 int main(int argc, char **argv) {
