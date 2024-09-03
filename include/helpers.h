@@ -1,5 +1,5 @@
-#ifndef CURSES_HELPERS_H
-#define CURSES_HELPERS_H
+#ifndef HELPERS_H
+#define HELPERS_H
 
 #include "common.h"
 #include "table.h"
@@ -30,7 +30,11 @@ typedef enum {
 
 /* Forward function decls */
 
+char       *itoa(const int d);
+int         atoi(const char* const a);
+char       *dtoa(const double d);
+double      atod(const char* const a);
 Color_t     hex_to_rgb(const char *hex);
 void        color_cell(const Point_t location, const NugetCol_t col_pair, const uint64_t attrs);
 
-#endif /* CURSES_HELPERS_H */
+#endif /* HELPERS_H */

@@ -1,4 +1,42 @@
-#include "../include/curses_helpers.h"
+#include "helpers.h"
+
+char *itoa(const int n) {
+    int i, tmp = n;
+    unsigned digits = 0;
+    char *a = NULL;
+
+    do {
+        digits++;
+        tmp /= 10;
+    } while (tmp);
+
+    a = malloc((digits + 1) * sizeof(char));
+    if (a == NULL) {
+        /* TODO: Error handling */
+        return NULL;
+    }
+
+    for (i = digits, tmp = n; i > 0; --i) {
+        a[i - 1] = (tmp % 10) + '0';
+        tmp /= 10;
+    }
+
+    a[digits] = '\0';
+
+    return a;
+}
+
+int atoi(const char* const a) {
+    return 0;
+}
+
+char *dtoa(const double d) {
+    return NULL;
+}
+
+double atod(const char* const a) {
+    return 0.0;
+}
 
 Color_t hex_to_rgb(const char *hex) {
     const size_t hb_width = 2; /* Hex byte width */
@@ -8,7 +46,14 @@ Color_t hex_to_rgb(const char *hex) {
     char *r = alloca(hb_width + 1);
     char *g = alloca(hb_width + 1);
     char *b = alloca(hb_width + 1);
-    char *hex_copy = strdup(hex);
+    char *hex_copy = NULL;
+
+    hex_copy = malloc(strlen(hex) + 1);
+    if (hex_copy == NULL) {
+        /* TODO: Error */
+        return color;
+    }
+    strncpy(hex_copy, hex, strlen(hex) + 1);
 
     /* Validation */
     assert(strlen(hex_copy) == 7);

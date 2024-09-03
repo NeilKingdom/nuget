@@ -1,15 +1,19 @@
-#ifndef KEYBOARD_H
-#define KEYBOARD_H
+#ifndef KBD_H
+#define KBD_H
 
-#include "main.h"
-#include "table.h"
 #include <X11/keysym.h>
+
+#include "common.h"
+#include "table.h"
 
 #define KEYSTROKE_MAX 10
 #define XK_NULL 0
 
+/* Externs */
+bool quit_nuget;
+
 typedef uint16_t keysym_t;
-typedef void (*kc_callback)(pTableCtx_t table, void **args);
+typedef void (*kc_callback)(TableCtx_t *table, void **args);
 
 typedef enum {
     NORMAL,
@@ -27,35 +31,35 @@ typedef struct {
 
 /*** Callbacks ***/
 
-static void insert_mode(pTableCtx_t restrict table, void **args) {
+static void insert_mode(TableCtx_t *table, void **args) {
     curr_mode = INSERT;
 }
 
-static void normal_mode(pTableCtx_t restrict table, void **args) {
+static void normal_mode(TableCtx_t *table, void **args) {
     curr_mode = NORMAL;
 }
 
-static void jump_to_top(pTableCtx_t restrict table, void **args) {
+static void jump_to_top(TableCtx_t *table, void **args) {
     table->offset_y = 0;
 }
 
-static void jump_to_bottom(pTableCtx_t restrict table, void **args) {
+static void jump_to_bottom(TableCtx_t *table, void **args) {
     table->offset_y = MAX_ROWS - table->vis_rows;
 }
 
-static void page_down(pTableCtx_t restrict table, void **args) {
+static void page_down(TableCtx_t *table, void **args) {
     if (table->offset_y < MAX_ROWS - table->vis_rows) {
         table->offset_y += table->vis_rows;
     }
 }
 
-static void page_up(pTableCtx_t restrict table, void **args) {
+static void page_up(TableCtx_t *table, void **args) {
     if (table->offset_y > table->vis_rows) {
         table->offset_y -= table->vis_rows;
     }
 }
 
-static void quit(pTableCtx_t restrict table, void **args) {
+static void quit(TableCtx_t *table, void **args) {
     quit_nuget = true;
 }
 
@@ -65,7 +69,7 @@ static void quit(pTableCtx_t restrict table, void **args) {
  * @param table The table context object
  * @param direction The cardinal direction in which to scroll the table
  */
-static void move_cursor(pTableCtx_t restrict table, void **args) {
+static void move_cursor(TableCtx_t *table, void **args) {
     Direction_t **ptr = (Direction_t**)args;
     const Direction_t direction = *ptr[0];
 
@@ -131,4 +135,4 @@ static KeyChord_t ins_bindings[] = {
 static KeyChord_t vis_bindings[] = {
 };
 
-#endif /* KEYBOARD_H */
+#endif /* KBD_H */

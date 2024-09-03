@@ -1,4 +1,5 @@
 #include "table.h"
+#include "helpers.h"
 
 /*
  * TODO:
@@ -11,13 +12,11 @@
         Private Functions
  =============================*/
 
-__attribute__((always_inline))
-static void clamp_u64(uint64_t *x, uint64_t lo, uint64_t hi) {
+static inline void clamp_u64(uint64_t *x, uint64_t lo, uint64_t hi) {
     *x = ((*x < lo) ? lo : *x) > hi ? hi : *x;
 }
 
-__attribute__((always_inline))
-static void clamp_s64(int64_t *x, int64_t lo, int64_t hi) {
+static inline void clamp_s64(int64_t *x, int64_t lo, int64_t hi) {
     *x = ((*x < lo) ? lo : *x) > hi ? hi : *x;
 }
 
@@ -48,7 +47,7 @@ static char *get_center_pad(cell_t restrict cell) {
  * @param location The location of the cell that will be returned
  * @returns A reference to the cell located at location
  */
-cell_t *get_cell_value(pTableCtx_t restrict table, const Point_t location) {
+cell_t *get_cell_value(TableCtx_t *restrict table, const Point_t location) {
     unsigned x, y;
     x = location.x + table->offset_x;
     y = (location.y + table->offset_y) * MAX_COLS;
@@ -60,12 +59,12 @@ cell_t *get_cell_value(pTableCtx_t restrict table, const Point_t location) {
  * @since 11-03-2024
  * @returns A reference to the table context object
  */
-pTableCtx_t create_table_ctx(void) {
+TableCtx_t *create_table_ctx(void) {
     unsigned x, y, col_num = 0;
-    pTableCtx_t table = NULL;
+    TableCtx_t *table = NULL;
 
     /* Allocate memory for table struct */
-    table = calloc(1, sizeof(tableCtx_t));
+    table = calloc(1, sizeof(TableCtx_t));
     if (table == NULL) {
         perror("Failed to allocate memory for table context");
         return NULL;
@@ -91,7 +90,7 @@ pTableCtx_t create_table_ctx(void) {
  * @since 11-03-2024
  * @param table The table context object
  */
-void draw_col_ids(pTableCtx_t restrict table) {
+void draw_col_ids(TableCtx_t *table) {
     char col_id[3];
     char lnibble, rnibble;
     unsigned i, x, row_num;
@@ -119,13 +118,13 @@ void draw_col_ids(pTableCtx_t restrict table) {
  * @since 11-03-2024
  * @param table The table context object
  */
-void draw_row_ids(pTableCtx_t restrict table) {
+void draw_row_ids(TableCtx_t *table) {
     unsigned y, row_num;
     char *row_id = NULL;
 
     for (y = 1, row_num = table->offset_y; y < table->vis_rows; ++y, ++row_num) {
         /* TODO: Could fail if column width is too small */
-        row_id = dtoa(row_num);
+        row_id = itoa(row_num);
         mvprintw(y, 0, "%s", row_id);
         free(row_id);
 
@@ -142,7 +141,7 @@ void draw_row_ids(pTableCtx_t restrict table) {
  * @since 11-03-2024
  * @param table The table context object to be destroyed
  */
-void destroy_table_ctx(pTableCtx_t restrict table) {
+void destroy_table_ctx(TableCtx_t *table) {
     unsigned x, y;
 
     if (table == NULL) {
@@ -177,7 +176,7 @@ void destroy_table_ctx(pTableCtx_t restrict table) {
  * @param selected Should be true if the cell is currently selected or false otherwise
  */
 void draw_cell(
-    pTableCtx_t restrict table,
+    TableCtx_t *table,
     const Point_t location,
     const Align_t align,
     const bool selected
@@ -220,12 +219,12 @@ void draw_cell(
  * @brief Update the value of the cell located at location
  * @since 11-03-2024
  * @param table The table context object
- * @param value The new value (text) to update the cell with
+ * @param text Text to update the cell with
  * @param location The location of the cell that shall be updated
  */
 void set_cell_value(
-    pTableCtx_t restrict table,
-    const char * restrict value,
+    TableCtx_t *table,
+    const char* const text,
     const Point_t location
 ) {
     cell_t *cell = get_cell_value(table, location);
@@ -236,7 +235,7 @@ void set_cell_value(
             exit(EXIT_FAILURE);
         }
     }
-    strncpy(*cell, value, cell_cwidth);
+    strncpy(*cell, text, cell_cwidth);
 }
 
 /**
@@ -244,7 +243,7 @@ void set_cell_value(
  * @since 11-03-2024
  * @param table The table context object
  */
-void redraw_table(pTableCtx_t restrict table) {
+void redraw_table(TableCtx_t *table) {
     bool selected;
     unsigned x, y;
 
@@ -267,7 +266,7 @@ void redraw_table(pTableCtx_t restrict table) {
  * @param table The table context object
  * @param direction The cardinal direction in which to scroll the table
  */
-void scroll_table(pTableCtx_t restrict table, const Direction_t direction) {
+void scroll_table(TableCtx_t *table, const Direction_t direction) {
     switch (direction) {
         case LEFT:
             if (table->offset_x > 0) {

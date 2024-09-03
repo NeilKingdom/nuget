@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <alloca.h>
 #include <stdint.h>
 #include <unistd.h>
 #include <limits.h>
@@ -37,8 +38,5 @@ typedef enum {
     LEFT,
     RIGHT
 } Direction_t;
-
-char        *dtoa(const double d);
-double      atod(const char *a);
 
 #endif /* COMMON_H */

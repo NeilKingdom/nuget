@@ -1,8 +1,4 @@
 #include "main.h"
-#include "keyboard.h"
-
-#include <signal.h>
-#include <time.h>
 
 /* Externs */
 uint8_t cell_cwidth = 0;
@@ -41,7 +37,7 @@ static void setup_curses(void) {
 }
 
 static void exec_kc_callback(
-    pTableCtx_t restrict table,
+    TableCtx_t *table,
     const keysym_t *seq
 ) {
     unsigned i, j;
@@ -104,11 +100,11 @@ static bool match_count(const keysym_t *seq) {
 
 static bool block;
 
-void timer_done(union sigval sig) {
+static void timer_done(union sigval sig) {
     block = false;
 }
 
-static void handle_input(pTableCtx_t restrict table) {
+static void handle_input(TableCtx_t *table) {
     int c;
     size_t bsize;
     unsigned i = 0;
@@ -158,7 +154,7 @@ static void handle_input(pTableCtx_t restrict table) {
 }
 
 int main(int argc, char **argv) {
-    pTableCtx_t table = NULL;
+    TableCtx_t *table = NULL;
 
     /* Initialization */
     setup_curses();
