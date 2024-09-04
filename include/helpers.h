@@ -34,7 +34,7 @@ char       *itoa(const int d);
 int         atoi(const char* const a);
 char       *dtoa(const double d);
 double      atod(const char* const a);
-Color_t     hex_to_rgb(const char *hex);
+Color_t     hex_to_rgb(const char* const hex);
 void        color_cell(const Point_t location, const NugetCol_t col_pair, const uint64_t attrs);
 
 #endif /* HELPERS_H */

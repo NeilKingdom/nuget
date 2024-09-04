@@ -12,14 +12,6 @@
         Private Functions
  =============================*/
 
-static inline void clamp_u64(uint64_t *x, uint64_t lo, uint64_t hi) {
-    *x = ((*x < lo) ? lo : *x) > hi ? hi : *x;
-}
-
-static inline void clamp_s64(int64_t *x, int64_t lo, int64_t hi) {
-    *x = ((*x < lo) ? lo : *x) > hi ? hi : *x;
-}
-
 static char *get_right_pad(cell_t restrict cell) {
     return NULL;
 }
@@ -136,6 +128,7 @@ void draw_row_ids(TableCtx_t *table) {
     }
 }
 
+/* TODO: This works for now, but is very slow. Use CSV to determine which cells should be freed */
 /**
  * @brief Destroys a table context object
  * @since 11-03-2024
@@ -151,16 +144,13 @@ void destroy_table_ctx(TableCtx_t *table) {
     table->offset_x = 0;
     table->offset_y = 0;
 
-    if (table->cells) {
-        for (y = 0; y < MAX_ROWS; ++y) {
-            for (x = 0; x < MAX_COLS; ++x) {
-                cell_t *cell = get_cell_value(table, (Point_t){ x, y });
-                if (*cell) {
-                    free(*cell);
-                }
+    for (y = 0; y < MAX_ROWS; ++y) {
+        for (x = 0; x < MAX_COLS; ++x) {
+            cell_t *cell = get_cell_value(table, (Point_t){ x, y });
+            if (*cell) {
+                free(*cell);
             }
         }
-        free(table->cells);
     }
 
     free(table);

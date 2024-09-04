@@ -12,7 +12,7 @@ char *itoa(const int n) {
 
     a = malloc((digits + 1) * sizeof(char));
     if (a == NULL) {
-        /* TODO: Error handling */
+        perror("Failed to allocate memory for buffer");
         return NULL;
     }
 
@@ -39,13 +39,13 @@ double atod(const char* const a) {
 }
 
 Color_t hex_to_rgb(const char *hex) {
-    const size_t hb_width = 2; /* Hex byte width */
+    const size_t nibbles = 2;
     size_t bad_range;
     unsigned i;
     Color_t color = { 0 };
-    char *r = alloca(hb_width + 1);
-    char *g = alloca(hb_width + 1);
-    char *b = alloca(hb_width + 1);
+    char *r = alloca(nibbles + 1);
+    char *g = alloca(nibbles + 1);
+    char *b = alloca(nibbles + 1);
     char *hex_copy = NULL;
 
     hex_copy = malloc(strlen(hex) + 1);
@@ -59,21 +59,17 @@ Color_t hex_to_rgb(const char *hex) {
     assert(strlen(hex_copy) == 7);
     assert(hex_copy[0] == '#');
 
-    hex_copy++; /* Skip over octothorp */
-    for (i = 0; i < strlen(hex_copy); ++i) {
+    for (i = 1; i < strlen(hex_copy); ++i) {
         hex_copy[i] = (char)toupper(hex_copy[i]);
         assert(isdigit(hex_copy[i]) || (hex_copy[i] >= 'A' && hex_copy[i] <= 'F'));
     }
 
-    /* Split into slices */
-    strncpy(r, hex_copy, hb_width);
-    r[hb_width] = '\0';
-    hex_copy += hb_width;
-    strncpy(g, hex_copy, hb_width);
-    g[hb_width] = '\0';
-    hex_copy += hb_width;
-    strncpy(b, hex_copy, hb_width);
-    b[hb_width] = '\0';
+    /* Split into color channels */
+    strncpy(r, hex_copy, nibbles + 1);
+    hex_copy += nibbles;
+    strncpy(g, hex_copy, nibbles + 1);
+    hex_copy += nibbles;
+    strncpy(b, hex_copy, nibbles + 1);
 
     /* Compute rgb888 values */
     bad_range = 'A' - '9' - 1; /* Unused ASCII chars between digits and uppercase */
@@ -85,7 +81,7 @@ Color_t hex_to_rgb(const char *hex) {
     color.b |= (b[1] <= '9') ? (b[1] - '0')      : (b[1] - '0' - bad_range);
 
     /* Cleanup */
-    hex_copy -= (hb_width + hb_width + 1);
+    hex_copy -= (nibbles + nibbles + 1);
     free(hex_copy);
 
     return color;
