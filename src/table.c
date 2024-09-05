@@ -12,11 +12,11 @@
         Private Functions
  =============================*/
 
-static char *get_right_pad(cell_t restrict cell) {
+static char *get_right_pad(const cell_t cell) {
     return NULL;
 }
 
-static char *get_center_pad(cell_t restrict cell) {
+static char *get_center_pad(const cell_t cell) {
     size_t pad_size;
     char *padding = NULL;
 
@@ -52,7 +52,6 @@ cell_t *get_cell_value(TableCtx_t *restrict table, const Point_t location) {
  * @returns A reference to the table context object
  */
 TableCtx_t *create_table_ctx(void) {
-    unsigned x, y, col_num = 0;
     TableCtx_t *table = NULL;
 
     /* Allocate memory for table struct */
@@ -85,13 +84,13 @@ TableCtx_t *create_table_ctx(void) {
 void draw_col_ids(TableCtx_t *table) {
     char col_id[3];
     char lnibble, rnibble;
-    unsigned i, x, row_num;
+    unsigned i, x;
     const size_t base = 26;
 
     /* TODO: Broken */
     lnibble = rnibble = table->offset_x;
 
-    for (x = 1, i = 0, row_num = table->offset_x; x < table->vis_cols; ++x, ++i) {
+    for (x = 1, i = 0; x < table->vis_cols; ++x, ++i) {
         col_id[2] = '\0';
         col_id[1] = ((rnibble + i) % base) + 'A';
         col_id[0] = ((lnibble + i) / base) + 'A';
@@ -257,6 +256,9 @@ void redraw_table(TableCtx_t *table) {
  * @param direction The cardinal direction in which to scroll the table
  */
 void scroll_table(TableCtx_t *table, const Direction_t direction) {
+    const uint64_t right_bound = MAX_COLS - table->vis_cols + 1;
+    const uint64_t bottom_bound = MAX_ROWS - table->vis_rows + 1;
+
     switch (direction) {
         case LEFT:
             if (table->offset_x > 0) {
@@ -264,7 +266,7 @@ void scroll_table(TableCtx_t *table, const Direction_t direction) {
             }
             break;
         case RIGHT:
-            if (table->offset_x < MAX_COLS - 1) {
+            if (table->offset_x < right_bound) {
                 ++table->offset_x;
             }
             break;
@@ -274,7 +276,7 @@ void scroll_table(TableCtx_t *table, const Direction_t direction) {
             }
             break;
         case DOWN:
-            if (table->offset_y < MAX_ROWS - 1) {
+            if (table->offset_y < bottom_bound) {
                 ++table->offset_y;
             }
             break;

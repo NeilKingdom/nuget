@@ -40,7 +40,7 @@ double atod(const char* const a) {
 
 Color_t hex_to_rgb(const char *hex) {
     const size_t nibbles = 2;
-    size_t bad_range;
+    int bad_range;
     unsigned i;
     Color_t color = { 0 };
     char *r = alloca(nibbles + 1);

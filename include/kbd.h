@@ -35,6 +35,14 @@ static Mode_t curr_mode = NORMAL;   /* Current vim mode */
 
 /*** Callbacks ***/
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
 static void insert_mode(TableCtx_t *table, void **args) {
     curr_mode = INSERT;
 }
@@ -61,6 +69,7 @@ static void jump_to_bottom(TableCtx_t *table, void **args) {
 
 static void page_up(TableCtx_t *table, void **args) {
     int64_t new_offset;
+
     new_offset = table->offset_y - table->vis_rows;
     new_offset = (new_offset < 0) ? 0 : new_offset;
     table->offset_y = new_offset;
@@ -68,8 +77,10 @@ static void page_up(TableCtx_t *table, void **args) {
 
 static void page_down(TableCtx_t *table, void **args) {
     uint64_t new_offset;
+    const uint64_t upper_bound = MAX_ROWS - table->vis_rows + 1;
+
     new_offset = table->offset_y + table->vis_rows;
-    new_offset = (new_offset > (MAX_ROWS - table->vis_rows + 1)) ? (MAX_ROWS - table->vis_rows + 1) : new_offset;
+    new_offset = (new_offset > upper_bound) ? upper_bound : new_offset;
     table->offset_y = new_offset;
 }
 
@@ -94,67 +105,69 @@ static void move_cursor(TableCtx_t *table, void **args) {
         case LEFT:
             if (table->cursor.x > 0) {
                 --table->cursor.x;
-            } else if (table->cursor.x == 0
-                && table->offset_x > 0) {
+            } else if (table->cursor.x == 0) {
                 scroll_table(table, LEFT);
             }
             break;
         case RIGHT:
-            if (table->cursor.x < table->vis_cols - 1) {
+            if (table->cursor.x < (uint64_t)(table->vis_cols - 1)) {
                 ++table->cursor.x;
-            } else if (table->cursor.x == table->vis_cols - 1
-                && table->offset_x < (MAX_COLS - table->vis_cols)) {
+            } else if (table->cursor.x == (uint64_t)(table->vis_cols - 1)) {
                 scroll_table(table, RIGHT);
             }
             break;
         case UP:
             if (table->cursor.y > 0) {
                 --table->cursor.y;
-            } else if (table->cursor.y == 0
-                && table->offset_y > 0) {
+            } else if (table->cursor.y == 0) {
                 scroll_table(table, UP);
             }
             break;
         case DOWN:
-            if (table->cursor.y < table->vis_rows - 1) {
+            if (table->cursor.y < (uint64_t)(table->vis_rows - 1)) {
                 ++table->cursor.y;
-            } else if (table->cursor.y == table->vis_rows - 1
-                && table->offset_y < (MAX_ROWS - table->vis_rows)) {
+            } else if (table->cursor.y == (uint64_t)(table->vis_rows - 1)) {
                 scroll_table(table, DOWN);
             }
             break;
     }
 }
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#elif defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
 /*** Bindings ***/
 
 /* Normal mode bindings */
 static KeyChord_t norm_bindings[] = {
-    { .seq = { XK_i, XK_NULL },                 .func = insert_mode,       .args = NULL },
+    { .seq = { XK_i, XK_NULL },                 .func = insert_mode,       .args = { NULL }},
     { .seq = { XK_h, XK_NULL },                 .func = move_cursor,       .args = { &left }},
     { .seq = { XK_j, XK_NULL },                 .func = move_cursor,       .args = { &down }},
     { .seq = { XK_k, XK_NULL },                 .func = move_cursor,       .args = { &up }},
     { .seq = { XK_l, XK_NULL },                 .func = move_cursor,       .args = { &right }},
-    { .seq = { XK_V, XK_NULL },                 .func = visual_mode,       .args = NULL },
-    { .seq = { XK_G, XK_NULL },                 .func = jump_to_bottom,    .args = NULL },
-    { .seq = { XK_g, XK_g, XK_NULL },           .func = jump_to_top,       .args = NULL },
-    { .seq = { XK_Z, XK_Z, XK_NULL },           .func = quit_nuget,        .args = NULL },
+    { .seq = { XK_V, XK_NULL },                 .func = visual_mode,       .args = { NULL }},
+    { .seq = { XK_G, XK_NULL },                 .func = jump_to_bottom,    .args = { NULL }},
+    { .seq = { XK_g, XK_g, XK_NULL },           .func = jump_to_top,       .args = { NULL }},
+    { .seq = { XK_Z, XK_Z, XK_NULL },           .func = quit_nuget,        .args = { NULL }},
     /*
     { .seq = { XK_Control_L, XK_b, XK_NULL },   .func = page_up,           .args = NULL },
     { .seq = { XK_Control_L, XK_f, XK_NULL },   .func = page_down,         .args = NULL },
     */
-    { .seq = { XK_b, XK_NULL },   .func = page_up,           .args = NULL },
-    { .seq = { XK_f, XK_NULL },   .func = page_down,         .args = NULL },
+    { .seq = { XK_b, XK_NULL },   .func = page_up,           .args = { NULL }},
+    { .seq = { XK_f, XK_NULL },   .func = page_down,         .args = { NULL }},
 };
 
 /* Insert mode bindings */
-static KeyChord_t ins_bindings[] = {
-    { .seq = { XK_Escape, XK_NULL },  .func = normal_mode,       .args = NULL },
+static KeyChord_t ins_bindings[1] = {
+    { .seq = { XK_Escape, XK_NULL },    .func = normal_mode,    .args = { NULL }}
 };
 
 /* Visual mode bindings */
 static KeyChord_t vis_bindings[] = {
-    { .seq = { XK_Escape, XK_NULL },  .func = normal_mode,       .args = NULL },
+    { .seq = { XK_Escape, XK_NULL },    .func = normal_mode,    .args = { NULL }},
 };
 
 #endif /* KBD_H */
