@@ -18,6 +18,8 @@ typedef enum {
     VISUAL
 } Mode_t;
 
+static Mode_t curr_mode = NORMAL;
+
 typedef struct {
     keysym_t    seq[KEYSTROKE_MAX]; /* The sequence of keys that make up the chord (NULL-terminated) */
     kc_callback func;               /* A callback to be performed when the sequence is completed */
@@ -30,8 +32,6 @@ static Direction_t left     = LEFT;
 static Direction_t right    = RIGHT;
 static Direction_t up       = UP;
 static Direction_t down     = DOWN;
-
-static Mode_t curr_mode = NORMAL;   /* Current vim mode */
 
 /*** Callbacks ***/
 
@@ -161,7 +161,7 @@ static KeyChord_t norm_bindings[] = {
 };
 
 /* Insert mode bindings */
-static KeyChord_t ins_bindings[1] = {
+static KeyChord_t ins_bindings[] = {
     { .seq = { XK_Escape, XK_NULL },    .func = normal_mode,    .args = { NULL }}
 };
 

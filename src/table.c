@@ -1,27 +1,59 @@
 #include "table.h"
 #include "helpers.h"
 
-/*
- * TODO:
- * - Shift cells right and down 1 to accomodate row/col ids
- * - Proper error handling
- * - [out/in] tags for doxygen
+/**
+ * @file table.c
+ * @author Neil Kingdom
+ * @since 05-09-2024
+ * @version 1.0
  */
 
 /*==============================
         Private Functions
  =============================*/
 
+/**
+ * @brief Returns a string of padding to be placed before the cell's contents.
+ * Uses the cell_cwidth to determine how much space should be prepended to
+ * the string contained in cell such that the text is aligned to the right of
+ * the cell.
+ * @param cell A cell containing the text that needs to be padded
+ * @returns A string of whitespace, which is to be prepended before cell
+ */
 static char *get_right_pad(const cell_t cell) {
-    return NULL;
+    size_t pad_size;
+    char *padding = NULL;
+
+    pad_size = cell_cwidth - strlen(cell);
+    padding = malloc(pad_size + 1);
+    if (padding == NULL) {
+        perror("Failed to allocate memory for right pad");
+        return NULL;
+    }
+    memset((void*)padding, ' ', pad_size);
+    padding[pad_size] = '\0';
+
+    return padding;
 }
 
+/**
+ * @brief Returns a string of padding to be placed before the cell's contents.
+ * Uses the cell_cwidth to determine how much space should be prepended to
+ * the string contained in cell such that the text is centered.
+ * @since 03-11-2024
+ * @param cell A cell containing the text that needs to be padded
+ * @returns A string of whitespace, which is to be prepended before cell
+ */
 static char *get_center_pad(const cell_t cell) {
     size_t pad_size;
     char *padding = NULL;
 
     pad_size = (cell_cwidth - strlen(cell)) / 2;
     padding = malloc(pad_size + 1);
+    if (padding == NULL) {
+        perror("Failed to allocate memory for right pad");
+        return NULL;
+    }
     memset((void*)padding, ' ', pad_size);
     padding[pad_size] = '\0';
 
@@ -33,7 +65,7 @@ static char *get_center_pad(const cell_t cell) {
  =============================*/
 
 /**
- * @brief Returns a reference to the cell located at location
+ * @brief Returns a reference to the cell located at location.
  * @since 11-03-2024
  * @param table The table context object
  * @param location The location of the cell that will be returned
@@ -47,7 +79,7 @@ cell_t *get_cell_value(TableCtx_t *restrict table, const Point_t location) {
 }
 
 /**
- * @brief Creates a new table context object and returns it
+ * @brief Creates a new table context object and returns it.
  * @since 11-03-2024
  * @returns A reference to the table context object
  */
@@ -77,23 +109,22 @@ TableCtx_t *create_table_ctx(void) {
 }
 
 /**
- * @brief Draw the column IDs e.g. A..Z, AA..ZZ
+ * @brief Draw the column IDs AA-ZZ.
  * @since 11-03-2024
  * @param table The table context object
  */
 void draw_col_ids(TableCtx_t *table) {
-    char col_id[3];
-    char lnibble, rnibble;
     unsigned i, x;
+    uint64_t lb, rb;
+    char col_id[3];
     const size_t base = 26;
 
-    /* TODO: Broken */
-    lnibble = rnibble = table->offset_x;
+    lb = rb = table->offset_x;
 
     for (x = 1, i = 0; x < table->vis_cols; ++x, ++i) {
+        col_id[0] = ((lb + i) / base) + 'A';
+        col_id[1] = ((rb + i) % base) + 'A';
         col_id[2] = '\0';
-        col_id[1] = ((rnibble + i) % base) + 'A';
-        col_id[0] = ((lnibble + i) / base) + 'A';
         mvprintw(0, x * cell_cwidth, "%s", col_id);
 
         if (x == table->cursor.x) {
@@ -105,7 +136,7 @@ void draw_col_ids(TableCtx_t *table) {
 }
 
 /**
- * @brief Draw the row IDs e.g. 0..(MAX_ROWS - 1)
+ * @brief Draw the row IDs 0-MAX_ROWS.
  * @since 11-03-2024
  * @param table The table context object
  */
@@ -157,7 +188,8 @@ void destroy_table_ctx(TableCtx_t *table) {
 }
 
 /**
- * @brief Draw a single cell i.e. update a cell's location, padding, and styling
+ * @brief Draw a single cell.
+ * Updates the cell's location, padding, and styling before rendering.
  * @since 11-03-2024
  * @param table The table context object
  * @param location The new location at which the cell will be drawn
@@ -205,7 +237,7 @@ void draw_cell(
 }
 
 /**
- * @brief Update the value of the cell located at location
+ * @brief Update the value of the cell located at location.
  * @since 11-03-2024
  * @param table The table context object
  * @param text Text to update the cell with
@@ -228,7 +260,7 @@ void set_cell_value(
 }
 
 /**
- * @brief Re-render the entire table by updating each visible cell
+ * @brief Re-render the entire table by updating each visible cell.
  * @since 11-03-2024
  * @param table The table context object
  */
@@ -250,7 +282,7 @@ void redraw_table(TableCtx_t *table) {
 }
 
 /**
- * @brief Scrolls the table by updating x and y offsets
+ * @brief Scrolls the table by updating x and y offsets.
  * @since 11-03-2024
  * @param table The table context object
  * @param direction The cardinal direction in which to scroll the table

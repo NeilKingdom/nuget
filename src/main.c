@@ -36,7 +36,6 @@ static void exec_kc_callback(TableCtx_t* table, keysym_t* input_seq, int* seq_id
     size_t bsize, bseq_len, seq_len;
     KeyChord_t curr_binding;
     KeyChord_t *bindings = NULL;
-    kc_callback cb_func = NULL;
 
     switch (curr_mode) {
         case NORMAL:
@@ -71,8 +70,7 @@ static void exec_kc_callback(TableCtx_t* table, keysym_t* input_seq, int* seq_id
             continue;
         } else if (seq_len == bseq_len) {
             if (memcmp(input_seq, curr_binding.seq, seq_len) == 0) {
-                cb_func = curr_binding.func;
-                cb_func(table, curr_binding.args);
+                curr_binding.func(table, curr_binding.args);
 
                 *seq_idx = 0;
                 memset(input_seq, XK_NULL, KEYSTROKE_MAX);
@@ -103,8 +101,8 @@ static void handle_input(TableCtx_t* table, keysym_t* input_seq, int* seq_idx) {
 }
 
 int main(int argc, char **argv) {
-    TableCtx_t *table = NULL;
     int seq_idx = 0;
+    TableCtx_t *table = NULL;
     keysym_t input_seq[KEYSTROKE_MAX] = { XK_NULL };
 
     /* Initialization */
