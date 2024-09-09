@@ -65,20 +65,6 @@ static char *get_center_pad(const cell_t cell) {
  =============================*/
 
 /**
- * @brief Returns a reference to the cell located at location.
- * @since 11-03-2024
- * @param table The table context object
- * @param location The location of the cell that will be returned
- * @returns A reference to the cell located at location
- */
-cell_t *get_cell_value(TableCtx_t *restrict table, const Point_t location) {
-    unsigned x, y;
-    x = location.x + table->offset_x;
-    y = (location.y + table->offset_y) * MAX_COLS;
-    return table->cells + x + y;
-}
-
-/**
  * @brief Creates a new table context object and returns it.
  * @since 11-03-2024
  * @returns A reference to the table context object
@@ -108,56 +94,6 @@ TableCtx_t *create_table_ctx(void) {
     return table;
 }
 
-/**
- * @brief Draw the column IDs AA-ZZ.
- * @since 11-03-2024
- * @param table The table context object
- */
-void draw_col_ids(TableCtx_t *table) {
-    unsigned i, x;
-    uint64_t lb, rb;
-    char col_id[3];
-    const size_t base = 26;
-
-    lb = rb = table->offset_x;
-
-    for (x = 1, i = 0; x < table->vis_cols; ++x, ++i) {
-        col_id[0] = ((lb + i) / base) + 'A';
-        col_id[1] = ((rb + i) % base) + 'A';
-        col_id[2] = '\0';
-        mvprintw(0, x * cell_cwidth, "%s", col_id);
-
-        if (x == table->cursor.x) {
-            color_cell((Point_t){ x, 0 }, PRIMARY_INV, A_BOLD);
-        } else {
-            color_cell((Point_t){ x, 0 }, PRIMARY, A_BOLD);
-        }
-    }
-}
-
-/**
- * @brief Draw the row IDs 0-MAX_ROWS.
- * @since 11-03-2024
- * @param table The table context object
- */
-void draw_row_ids(TableCtx_t *table) {
-    unsigned y, row_num;
-    char *row_id = NULL;
-
-    for (y = 1, row_num = table->offset_y; y < table->vis_rows; ++y, ++row_num) {
-        /* TODO: Could fail if column width is too small */
-        row_id = itoa(row_num);
-        mvprintw(y, 0, "%s", row_id);
-        free(row_id);
-
-        if (y == table->cursor.y) {
-            color_cell((Point_t){ 0, y }, PRIMARY_INV, A_BOLD);
-        } else {
-            color_cell((Point_t){ 0, y }, PRIMARY, A_BOLD);
-        }
-    }
-}
-
 /* TODO: This works for now, but is very slow. Use CSV to determine which cells should be freed */
 /**
  * @brief Destroys a table context object
@@ -185,6 +121,104 @@ void destroy_table_ctx(TableCtx_t *table) {
 
     free(table);
     table = NULL;
+}
+
+/**
+ * @brief Returns a reference to the cell located at location.
+ * @since 11-03-2024
+ * @param table The table context object
+ * @param location The location of the cell that will be returned
+ * @returns A reference to the cell located at location
+ */
+cell_t *get_cell_value(TableCtx_t *table, const Point_t location) {
+    unsigned x, y;
+    x = location.x + table->offset_x;
+    y = (location.y + table->offset_y) * (MAX_COLS - 1);
+    return table->cells + x + y;
+}
+
+/**
+ * @brief Update the value of the cell located at location.
+ * @since 11-03-2024
+ * @param table The table context object
+ * @param text Text to update the cell with
+ * @param location The location of the cell that shall be updated
+ */
+void set_cell_value(
+    TableCtx_t *table,
+    const char* const text,
+    const Point_t location
+) {
+    cell_t *cell = get_cell_value(table, location);
+    if (*cell == NULL) {
+        *cell = malloc((cell_cwidth + 1) * sizeof(char));
+        if (*cell == NULL) {
+            perror("Failed to allocate memory for cell");
+            exit(EXIT_FAILURE);
+        }
+    }
+    strncpy(*cell, text, cell_cwidth);
+}
+
+/**
+ * @brief Helper function which applies colors and other attributes to a cell in the table.
+ * @since 08-09-2024
+ * @param location The location of the cell that will be updated
+ * @param col_pair The color pair that shall be applied to the cell at location
+ * @param attrs The attributes that will be applied to the cell at location
+ */
+void set_cell_attrs(const Point_t location, const NugetCol_t col_pair, const uint64_t attrs) {
+    mvchgat(location.y, location.x * cell_cwidth, cell_cwidth, attrs, col_pair, NULL);
+}
+
+/**
+ * @brief Draw the column labels AA-ZZ.
+ * @since 11-03-2024
+ * @param table The table context object
+ */
+void draw_col_labels(TableCtx_t *table) {
+    unsigned i, x;
+    uint64_t lb, rb;
+    char col_id[3];
+    const size_t base = 26;
+
+    lb = rb = table->offset_x;
+
+    for (x = 1, i = 0; x < table->vis_cols; ++x, ++i) {
+        col_id[0] = ((lb + i) / base) + 'A';
+        col_id[1] = ((rb + i) % base) + 'A';
+        col_id[2] = '\0';
+        mvprintw(0, x * cell_cwidth, "%s", col_id);
+
+        if (x == table->cursor.x) {
+            set_cell_attrs((Point_t){ x, 0 }, PRIMARY_INV, A_BOLD);
+        } else {
+            set_cell_attrs((Point_t){ x, 0 }, PRIMARY, A_BOLD);
+        }
+    }
+}
+
+/**
+ * @brief Draw the row labels 0-MAX_ROWS.
+ * @since 11-03-2024
+ * @param table The table context object
+ */
+void draw_row_labels(TableCtx_t *table) {
+    unsigned y, row_num;
+    char *row_id = NULL;
+
+    for (y = 1, row_num = table->offset_y; y < table->vis_rows; ++y, ++row_num) {
+        /* TODO: Could fail if column width is too small */
+        row_id = n_itoa(row_num);
+        mvprintw(y, 0, "%s", row_id);
+        free(row_id);
+
+        if (y == table->cursor.y) {
+            set_cell_attrs((Point_t){ 0, y }, PRIMARY_INV, A_BOLD);
+        } else {
+            set_cell_attrs((Point_t){ 0, y }, PRIMARY, A_BOLD);
+        }
+    }
 }
 
 /**
@@ -225,46 +259,22 @@ void draw_cell(
             printw("%s", padding);
             free(padding);
         }
-
         printw("%s", cell);
     }
 
     if (selected) {
-        color_cell(location, CURSOR, A_BOLD);
+        set_cell_attrs(location, CURSOR, A_BOLD);
     } else {
-        color_cell(location, DEFAULT, A_NORMAL);
+        set_cell_attrs(location, DEFAULT, A_NORMAL);
     }
 }
 
 /**
- * @brief Update the value of the cell located at location.
- * @since 11-03-2024
- * @param table The table context object
- * @param text Text to update the cell with
- * @param location The location of the cell that shall be updated
- */
-void set_cell_value(
-    TableCtx_t *table,
-    const char* const text,
-    const Point_t location
-) {
-    cell_t *cell = get_cell_value(table, location);
-    if (*cell == NULL) {
-        *cell = malloc((cell_cwidth + 1) * sizeof(char));
-        if (*cell == NULL) {
-            perror("Failed to allocate memory for cell");
-            exit(EXIT_FAILURE);
-        }
-    }
-    strncpy(*cell, text, cell_cwidth);
-}
-
-/**
- * @brief Re-render the entire table by updating each visible cell.
+ * @brief Refreshes the table by updating each visible cell.
  * @since 11-03-2024
  * @param table The table context object
  */
-void redraw_table(TableCtx_t *table) {
+void refresh_table(TableCtx_t *table) {
     bool selected;
     unsigned x, y;
 
@@ -275,8 +285,8 @@ void redraw_table(TableCtx_t *table) {
         }
     }
 
-    draw_row_ids(table);
-    draw_col_ids(table);
+    draw_row_labels(table);
+    draw_col_labels(table);
 
     refresh();
 }
@@ -315,5 +325,5 @@ void scroll_table(TableCtx_t *table, const Direction_t direction) {
     }
 
     clear();
-    redraw_table(table);
+    refresh_table(table);
 }

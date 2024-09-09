@@ -22,14 +22,15 @@ typedef struct {
 
 /* Forward function decls */
 
-TableCtx_t      *create_table_ctx(void);
-void             destroy_table_ctx(TableCtx_t *table);
-cell_t          *get_cell_value(TableCtx_t *table, const Point_t location);
-void             set_cell_value(TableCtx_t *table, const char *value, const Point_t location);
-void             draw_row_ids(TableCtx_t *table);
-void             draw_col_ids(TableCtx_t *table);
-void             draw_cell(TableCtx_t *table, const Point_t location, const Align_t align, const bool selected);
-void             redraw_table(TableCtx_t *table);
-void             scroll_table(TableCtx_t *table, const Direction_t direction);
+TableCtx_t     *create_table_ctx(void);
+void            destroy_table_ctx(TableCtx_t *table);
+cell_t         *get_cell_value(TableCtx_t *table, const Point_t location);
+void            set_cell_value(TableCtx_t *table, const char *value, const Point_t location);
+void            set_cell_attrs(const Point_t location, const NugetCol_t col_pair, const uint64_t attrs);
+void            draw_cell(TableCtx_t *table, const Point_t location, const Align_t align, const bool selected);
+void            draw_row_labels(TableCtx_t *table);
+void            draw_col_labels(TableCtx_t *table);
+void            refresh_table(TableCtx_t *table);
+void            scroll_table(TableCtx_t *table, const Direction_t direction);
 
 #endif /* TABLE_H */

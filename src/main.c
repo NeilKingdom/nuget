@@ -3,8 +3,13 @@
 /* Externs */
 uint8_t cell_cwidth = 0;
 
+/**
+ * @brief Initializes the curses window for use in the program.
+ * @since 11-03-2024
+ */
 static void setup_curses(void) {
-    initscr(); /* Initialize default window (stdscr) */
+    /* Initialize default window (stdscr) */
+    initscr();
 
     if (!has_colors()) {
         endwin();
@@ -12,7 +17,8 @@ static void setup_curses(void) {
         exit(EXIT_FAILURE);
     }
 
-    start_color(); /* Enable 255 color mode */
+    /* Enable 255 color mode */
+    start_color();
 
     /* Color pairs */
     init_pair(DEFAULT, DEFAULT_PAIR);
@@ -28,9 +34,16 @@ static void setup_curses(void) {
     noecho();               /* Don't echo typed characters to the TTY */
     keypad(stdscr, true);   /* Enable special keys e.g. function keys */
 
-    clear(); /* Clear the screen */
+    clear();
 }
 
+/**
+ * @brief Executes the callback function associated with any keychords matching the user's input sequence.
+ * @since 01-09-2024
+ * @param table A reference to the table context object
+ * @param input_seq The input sequence entered by the user
+ * @param seq_idx The current offset into the input_seq buffer
+ */
 static void exec_kc_callback(TableCtx_t* table, keysym_t* input_seq, int* seq_idx) {
     unsigned i, nmatches;
     size_t bsize, bseq_len, seq_len;
@@ -86,6 +99,13 @@ static void exec_kc_callback(TableCtx_t* table, keysym_t* input_seq, int* seq_id
     }
 }
 
+/**
+ * @brief Blocks waiting for user input from stdscr and then adds it to input_seq for processing.
+ * @since 01-09-2024
+ * @param table A reference to the table context object
+ * @param input_seq The input sequence buffer that keeps track of user input
+ * @param seq_idx The current offset into the input_seq buffer
+ */
 static void handle_input(TableCtx_t* table, keysym_t* input_seq, int* seq_idx) {
     keysym_t c;
 
@@ -112,7 +132,7 @@ int main(int argc, char **argv) {
     /* Program loop */
     while (true) {
         clear();
-        redraw_table(table);
+        refresh_table(table);
         handle_input(table, input_seq, &seq_idx);
     }
 }
