@@ -121,13 +121,25 @@ static void handle_input(TableCtx_t* table, keysym_t* input_seq, int* seq_idx) {
 }
 
 int main(int argc, char **argv) {
+    int status;
     int seq_idx = 0;
+    ncsv_t csv_ctx;
     TableCtx_t *table = NULL;
     keysym_t input_seq[KEYSTROKE_MAX] = { XK_NULL };
 
     /* Initialization */
     setup_curses();
     table = create_table_ctx();
+
+    /* libcsv setup */
+    status = csv_init(&csv_ctx, (CSV_APPEND_NULL | CSV_EMPTY_IS_NULL));
+    if (status != 0) {
+        fprintf(stderr, "Failed to initialize the CSV parser");
+        exit(EXIT_FAILURE);
+    }
+
+    /* TODO: Action should be triggered by user */
+    read_csv_data(table, &csv_ctx, "/home/neil/devel/projects/nuget/2024.csv");
 
     /* Program loop */
     while (true) {

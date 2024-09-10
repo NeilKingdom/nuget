@@ -13,7 +13,7 @@ DEPS := $(wildcard $(INC_DIR)/*.h)
 OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 
 CCFLAGS += $(CCFLAGS_$(PROFILE)) -I$(INC_DIR) -Wall -Wextra -Wformat #-Werror
-LDFLAGS += -lc -lm -lcurses
+LDFLAGS += -lc -lm -lcurses -lcsv
 
 BIN := nuget
 

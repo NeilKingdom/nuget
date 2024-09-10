@@ -2,10 +2,14 @@
 #define NCSV_H
 
 #include <csv.h>
+#include <sys/stat.h>
 
 #include "common.h"
+#include "table.h"
 
-void load_csv_data();
-void export_data_to_csv();
+typedef struct csv_parser ncsv_t;
+
+void read_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const file);
+void write_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const file);
 
 #endif /* NCSV_H */

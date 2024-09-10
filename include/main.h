@@ -5,5 +5,6 @@
 #include "table.h"
 #include "helpers.h"
 #include "kbd.h"
+#include "ncsv.h"
 
 #endif /* MAIN_H */

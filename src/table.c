@@ -149,6 +149,10 @@ void set_cell_value(
     const char* const text,
     const Point_t location
 ) {
+    if (text == NULL) {
+        return;
+    }
+
     cell_t *cell = get_cell_value(table, location);
     if (*cell == NULL) {
         *cell = malloc((cell_cwidth + 1) * sizeof(char));
