@@ -70,7 +70,7 @@ static void jump_to_bottom(TableCtx_t *table, void **args) {
 static void page_up(TableCtx_t *table, void **args) {
     int64_t new_offset;
 
-    new_offset = table->offset_y - table->vis_rows;
+    new_offset = table->offset_y - table->vis_rows + 1;
     new_offset = (new_offset < 0) ? 0 : new_offset;
     table->offset_y = new_offset;
 }
@@ -79,7 +79,7 @@ static void page_down(TableCtx_t *table, void **args) {
     uint64_t new_offset;
     const uint64_t upper_bound = MAX_ROWS - table->vis_rows + 1;
 
-    new_offset = table->offset_y + table->vis_rows;
+    new_offset = table->offset_y + table->vis_rows - 1;
     new_offset = (new_offset > upper_bound) ? upper_bound : new_offset;
     table->offset_y = new_offset;
 }

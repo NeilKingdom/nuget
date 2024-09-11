@@ -94,14 +94,30 @@ TableCtx_t *create_table_ctx(void) {
     return table;
 }
 
+/* TODO: Works for now but is slow. Use CSV file to determine which cell values to free */
 /**
  * @brief Destroys a table context object
  * @since 11-03-2024
  * @param table The table context object to be destroyed
  */
 void destroy_table_ctx(TableCtx_t *table) {
+    cell_t *cell = NULL;
+    uint64_t x, y;
+
     if (table == NULL) {
         return;
+    }
+
+    table->offset_x = 0;
+    table->offset_y = 0;
+
+    for (y = 0; y < MAX_ROWS; ++y) {
+        for (x = 0; x < MAX_COLS - 1; ++x) {
+            cell = get_cell_value(table, (Point_t){ x, y });
+            if (*cell) {
+                free(*cell);
+            }
+        }
     }
 
     if (table->cells) {
@@ -120,10 +136,9 @@ void destroy_table_ctx(TableCtx_t *table) {
  * @returns A reference to the cell located at location
  */
 cell_t *get_cell_value(TableCtx_t *table, const Point_t location) {
-    unsigned x, y;
-    x = location.x + table->offset_x;
-    y = (location.y + table->offset_y) * (MAX_COLS - 1);
-    return table->cells + x + y;
+    const uint64_t x = location.x + table->offset_x;
+    const uint64_t y = location.y + table->offset_y;
+    return table->cells + (y * (int)MAX_COLS) + x;
 }
 
 /**
@@ -150,7 +165,7 @@ void set_cell_value(
             exit(EXIT_FAILURE);
         }
     }
-    strncpy(*cell, text, cell_cwidth);
+    strncpy(*cell, text, cell_cwidth + 1);
 }
 
 /**
