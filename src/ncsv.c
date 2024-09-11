@@ -1,8 +1,5 @@
 #include "ncsv.h"
 
-static uint64_t x = 0;
-static uint64_t y = 0;
-
 /**
  * @brief Callback invoked by csv_parse() when a field has been read.
  * @since 09-09-2024
@@ -13,11 +10,9 @@ static uint64_t y = 0;
  */
 static void cb1(void *field, size_t field_len, void *data) {
     TableCtx_t *table = (TableCtx_t*)data;
-    Point_t location = { x, y };
 
-    set_cell_value(table, field, location);
-
-    x++;
+    set_cell_value(table, field, position);
+    position.x++;
 }
 
 /**
@@ -29,9 +24,17 @@ static void cb1(void *field, size_t field_len, void *data) {
 static void cb2(int eol, void *data) {
     /* TODO: validation on eol */
 
-    x = 0; y++;
+    position.x = 0;
+    position.y++;
 }
 
+/**
+ * @brief Reads data from file and populates the table with it.
+ * @since 09-09-2024
+ * @param table A reference to the table context object
+ * @param csv_ctx A reference to the CSV context object
+ * @param file Absolute path to the CSV file that shall be parsed
+ */
 void read_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const file) {
     size_t len, nb_read;
     void *buf = NULL;
@@ -62,13 +65,20 @@ void read_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const file) {
     }
     fread(buf, len, 1, fp);
 
+    /* TODO: Clear table */
+
+    position = table->cursor;
     nb_read = csv_parse(csv_ctx, buf, len, cb1, cb2, (void*)table);
     if (nb_read != len) {
         csv_error(csv_ctx);
         csv_free(csv_ctx);
+        free(buf);
         fclose(fp);
         exit(EXIT_FAILURE);
     }
+
+    free(buf);
+    fclose(fp);
 }
 
 void write_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const file) {

@@ -9,6 +9,10 @@
 
 typedef struct csv_parser ncsv_t;
 
+static Point_t position = { 0 };
+
+/* Forward function declarations */
+
 void read_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const file);
 void write_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const file);
 

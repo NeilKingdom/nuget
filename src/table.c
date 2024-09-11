@@ -94,29 +94,18 @@ TableCtx_t *create_table_ctx(void) {
     return table;
 }
 
-/* TODO: This works for now, but is very slow. Use CSV to determine which cells should be freed */
 /**
  * @brief Destroys a table context object
  * @since 11-03-2024
  * @param table The table context object to be destroyed
  */
 void destroy_table_ctx(TableCtx_t *table) {
-    unsigned x, y;
-
     if (table == NULL) {
         return;
     }
 
-    table->offset_x = 0;
-    table->offset_y = 0;
-
-    for (y = 0; y < MAX_ROWS; ++y) {
-        for (x = 0; x < MAX_COLS; ++x) {
-            cell_t *cell = get_cell_value(table, (Point_t){ x, y });
-            if (*cell) {
-                free(*cell);
-            }
-        }
+    if (table->cells) {
+        free(table->cells);
     }
 
     free(table);
@@ -240,12 +229,15 @@ void draw_cell(
     const Align_t align,
     const bool selected
 ) {
-    char *padding = NULL;
+    const uint64_t y_pos = location.y + 1;
+    const uint64_t x_pos = (location.x + 1) * cell_cwidth;
     cell_t cell = *get_cell_value(table, location);
+    bool last_col = (getmaxx(stdscr) - x_pos) < cell_cwidth;
+    char *padding = NULL;
 
-    move(location.y + 1, (location.x + 1) * cell_cwidth);
+    move(y_pos, x_pos);
 
-    if (cell != NULL) {
+    if (cell != NULL && !last_col) {
         switch (align) {
             case ALIGN_CENTER:
                 padding = get_center_pad(cell);
@@ -285,7 +277,7 @@ void refresh_table(TableCtx_t *table) {
     for (y = 0; y < table->vis_rows; ++y) {
         for (x = 0; x < table->vis_cols; ++x) {
             selected = (y == table->cursor.y && x == table->cursor.x);
-            draw_cell(table, (Point_t){ x, y }, ALIGN_CENTER, selected);
+            draw_cell(table, (Point_t){ x, y }, ALIGN_LEFT, selected);
         }
     }
 
