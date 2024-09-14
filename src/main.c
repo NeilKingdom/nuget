@@ -1,5 +1,7 @@
 #include "main.h"
 
+static volatile bool sigwinch_pending = false;
+
 /**
  * @brief Initializes the curses window for use in the program.
  * @since 11-03-2024
@@ -117,16 +119,58 @@ static void handle_input(TableCtx_t* table, keysym_t* input_seq, int* seq_idx) {
     exec_kc_callback(table, input_seq, seq_idx);
 }
 
+static void resize_win(int signo) {
+    sigwinch_pending = true;
+}
+
+static void *sig_hdlr(void *args) {
+    int status;
+    sigset_t sigset;
+    struct sigaction act;
+    struct winsize ws;
+    TableCtx_t *table = (TableCtx_t*)args;
+
+    sigemptyset(&sigset);
+    sigaddset(&sigset, SIGWINCH);
+
+    act.sa_mask = sigset;
+    act.sa_handler = resize_win;
+
+    /* Bind sigaction struct to POSIX signal */
+    status = sigaction(SIGWINCH, &act, NULL);
+    if (status != 0) {
+        perror("Failed to bind signal to handler");
+        exit(EXIT_FAILURE);
+    }
+
+    while (true) {
+        if (sigwinch_pending) {
+            ioctl(STDERR_FILENO, TIOCGWINSZ, &ws);
+            table->nvis_rows = ws.ws_row;
+            table->cell_width = ws.ws_col / table->nvis_cols;
+            resizeterm(ws.ws_row, ws.ws_col);
+            refresh_table(table);
+
+            sigwinch_pending = false;
+        }
+    }
+
+    return NULL;
+}
+
 int main(int argc, char **argv) {
     int status;
     int seq_idx = 0;
     ncsv_t csv_ctx;
+    pthread_t sig_thread;
     TableCtx_t *table = NULL;
     keysym_t input_seq[KEYSTROKE_MAX] = { XK_NULL };
 
     /* Initialization */
     setup_curses();
     table = create_table_ctx();
+
+    pthread_create(&sig_thread, NULL, sig_hdlr, (void*)table);
 
     /* libcsv setup */
     status = csv_init(&csv_ctx, (CSV_APPEND_NULL | CSV_EMPTY_IS_NULL));

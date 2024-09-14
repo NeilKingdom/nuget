@@ -14,6 +14,8 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include <ncurses.h>
+#include <signal.h>
+#include <sys/ioctl.h>
 
 typedef struct {
     uint8_t r;

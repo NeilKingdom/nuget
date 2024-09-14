@@ -70,6 +70,7 @@ static char *get_center_pad(TableCtx_t *table, const cell_t cell) {
  * @returns A reference to the table context object
  */
 TableCtx_t *create_table_ctx(void) {
+    struct winsize ws;
     TableCtx_t *table = NULL;
 
     /* Allocate memory for table struct */
@@ -79,12 +80,14 @@ TableCtx_t *create_table_ctx(void) {
         return NULL;
     }
 
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
+
     /* Initialize members */
     table->nvis_cols = 12; /* TODO: User-defined cols */
-    table->nvis_rows = getmaxy(stdscr);
+    table->nvis_rows = ws.ws_row;
+    table->cell_width = ws.ws_col / table->nvis_cols;
     table->table_offset = (Point_t){ 1, 1 };
     table->cursor = table->table_offset;
-    table->cell_width = getmaxx(stdscr) / table->nvis_cols;
 
     /* Allocate memory for cell references */
     table->data = calloc(MAX_ROWS * MAX_COLS, sizeof(cell_t));
@@ -258,33 +261,75 @@ void draw_cell(
     const Align_t align,
     const bool selected
 ) {
+    const char *ellipses = "...";
     const uint64_t y_pos = location.y;
     const uint64_t x_pos = location.x * table->cell_width;
+
+    struct winsize ws;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
+
     cell_t cell = *get_cell_value(table, location);
-    bool last_col = (getmaxx(stdscr) - x_pos) < table->cell_width;
+    bool at_last_col = (ws.ws_col - x_pos) < table->cell_width;
+
+    size_t padding_sz;
+    size_t appended_sz;
+    size_t final_str_sz;
+
     char *padding = NULL;
+    char *appended = NULL;
+    char *final_str = NULL;
 
-    move(y_pos, x_pos);
-
-    if (cell != NULL && !last_col) {
+    if (cell != NULL && !at_last_col) {
         switch (align) {
             case ALIGN_CENTER:
                 padding = get_center_pad(table, cell);
                 break;
             case ALIGN_RIGHT:
-                /* TODO: Implement */
-                fprintf(stderr, "Haven't implemented ALIGN_RIGHT");
-                exit(EXIT_FAILURE);
+                padding = get_right_pad(table, cell);
                 break;
+            case ALIGN_LEFT:
             default:
                 break;
         }
 
-        if (padding) {
-            printw("%s", padding);
-            free(padding);
+        padding_sz = (padding == NULL) ? 0 : strlen(padding);
+        appended_sz = padding_sz + strlen(cell);
+        final_str_sz = table->cell_width;
+
+        appended = malloc((appended_sz + 1) * sizeof(char));
+        if (appended == NULL) {
+            perror("Failed to allocate memory for temporary buffer");
+            exit(EXIT_FAILURE);
         }
-        printw("%s", cell);
+
+        final_str = malloc((table->cell_width + 1) * sizeof(char));
+        if (final_str == NULL) {
+            perror("Failed to allocate memory for temporary buffer");
+            exit(EXIT_FAILURE);
+        }
+
+        /* Create appended from padding + cell text */
+        if (padding_sz > 0) {
+            strncpy(appended, padding, padding_sz);
+            strncpy(appended + padding_sz, cell, strlen(cell));
+        } else {
+            strncpy(appended, cell, strlen(cell));
+        }
+        appended[appended_sz] = '\0';
+
+        /* Add ellipses if necessary */
+        if (appended_sz > final_str_sz) {
+            strncpy(final_str, appended, final_str_sz - strlen(ellipses));
+            strncpy(final_str + final_str_sz - strlen(ellipses), ellipses, strlen(ellipses));
+        } else {
+            strncpy(final_str, appended, final_str_sz);
+        }
+        final_str[final_str_sz] = '\0';
+
+        mvprintw(location.y, location.x * table->cell_width, "%s", final_str);
+        free(padding);
+        free(appended);
+        free(final_str);
     }
 
     if (selected) {
