@@ -4,20 +4,18 @@
 #include "common.h"
 
 #define MAX_ROWS    USHRT_MAX
-#define MAX_COLS    (pow(26, 2))
-
-extern uint8_t cell_cwidth; /* Character width of a cell */
+#define MAX_COLS    (pow(26, 2) + 1)
 
 typedef char *cell_t;
-typedef Point_t cursor_t;
 
 typedef struct {
-    uint8_t  vis_cols;  /* The number of currently visible columns */
-    uint8_t  vis_rows;  /* The number of currently visible rows */
-    uint64_t offset_x;  /* The cell's absolute x-offset */
-    uint64_t offset_y;  /* The cell's absolute y-offset */
-    cursor_t cursor;    /* The cursor location (relative to top left corner) */
-    cell_t  *cells;     /* 2D array of cells */
+    uint8_t  nvis_cols;     /* The number of currently visible columns on the page */
+    uint8_t  nvis_rows;     /* The number of currently visible rows on the page */
+    uint8_t  cell_width;    /* Character width of an individual cell */
+    Point_t  abs_offset;    /* Offset relative to the absolute top left coordinates*/
+    Point_t  table_offset;  /* Offset relative to the screen's top left coordinates */
+    Point_t  cursor;        /* The cursor location relative to the screen's coordinates */
+    cell_t  *data;          /* Table data */
 } TableCtx_t;
 
 /* Forward function decls */
@@ -26,7 +24,7 @@ TableCtx_t     *create_table_ctx(void);
 void            destroy_table_ctx(TableCtx_t *table);
 cell_t         *get_cell_value(TableCtx_t *table, const Point_t location);
 void            set_cell_value(TableCtx_t *table, const char *value, const Point_t location);
-void            set_cell_attrs(const Point_t location, const NugetCol_t col_pair, const uint64_t attrs);
+void            set_cell_attrs(TableCtx_t *table, const Point_t location, const NugetCol_t col_pair, const uint64_t attrs);
 void            draw_cell(TableCtx_t *table, const Point_t location, const Align_t align, const bool selected);
 void            draw_row_labels(TableCtx_t *table);
 void            draw_col_labels(TableCtx_t *table);

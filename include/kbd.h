@@ -56,32 +56,30 @@ static void visual_mode(TableCtx_t *table, void **args) {
 }
 
 static void jump_to_top(TableCtx_t *table, void **args) {
-    table->offset_y = 0;
-    table->cursor.y = 1;
-    clear();
+    table->abs_offset.y = 0;
+    table->cursor.y = table->table_offset.y;
 }
 
 static void jump_to_bottom(TableCtx_t *table, void **args) {
-    table->offset_y = MAX_ROWS - table->vis_rows + 1;
-    table->cursor.y = table->vis_rows - 1;
-    clear();
+    table->abs_offset.y = MAX_ROWS - table->nvis_rows;
+    table->cursor.y = table->nvis_rows - table->table_offset.y;
 }
 
 static void page_up(TableCtx_t *table, void **args) {
     int64_t new_offset;
 
-    new_offset = table->offset_y - table->vis_rows + 1;
+    new_offset = table->abs_offset.y - table->nvis_rows + table->table_offset.y;
     new_offset = (new_offset < 0) ? 0 : new_offset;
-    table->offset_y = new_offset;
+    table->abs_offset.y = new_offset;
 }
 
 static void page_down(TableCtx_t *table, void **args) {
     uint64_t new_offset;
-    const uint64_t upper_bound = MAX_ROWS - table->vis_rows + 1;
+    const uint64_t bottom_bound = MAX_ROWS - table->nvis_rows;
 
-    new_offset = table->offset_y + table->vis_rows - 1;
-    new_offset = (new_offset > upper_bound) ? upper_bound : new_offset;
-    table->offset_y = new_offset;
+    new_offset = table->abs_offset.y + table->nvis_rows - table->table_offset.y;
+    new_offset = (new_offset > bottom_bound) ? bottom_bound : new_offset;
+    table->abs_offset.y = new_offset;
 }
 
 static void quit_nuget(TableCtx_t *table, void **args) {
@@ -103,30 +101,30 @@ static void move_cursor(TableCtx_t *table, void **args) {
 
     switch (direction) {
         case LEFT:
-            if (table->cursor.x > 0) {
+            if (table->cursor.x > table->table_offset.x) {
                 --table->cursor.x;
-            } else if (table->cursor.x == 0) {
+            } else if (table->cursor.x == table->table_offset.x) {
                 scroll_table(table, LEFT);
             }
             break;
         case RIGHT:
-            if (table->cursor.x < (uint64_t)(table->vis_cols - 1)) {
+            if (table->cursor.x < (uint64_t)(table->nvis_cols - table->table_offset.x)) {
                 ++table->cursor.x;
-            } else if (table->cursor.x == (uint64_t)(table->vis_cols - 1)) {
+            } else if (table->cursor.x == (uint64_t)(table->nvis_cols - table->table_offset.x)) {
                 scroll_table(table, RIGHT);
             }
             break;
         case UP:
-            if (table->cursor.y > 0) {
+            if (table->cursor.y > table->table_offset.y) {
                 --table->cursor.y;
-            } else if (table->cursor.y == 0) {
+            } else if (table->cursor.y == table->table_offset.y) {
                 scroll_table(table, UP);
             }
             break;
         case DOWN:
-            if (table->cursor.y < (uint64_t)(table->vis_rows - 1)) {
+            if (table->cursor.y < (uint64_t)(table->nvis_rows - table->table_offset.y)) {
                 ++table->cursor.y;
-            } else if (table->cursor.y == (uint64_t)(table->vis_rows - 1)) {
+            } else if (table->cursor.y == (uint64_t)(table->nvis_rows - table->table_offset.y)) {
                 scroll_table(table, DOWN);
             }
             break;

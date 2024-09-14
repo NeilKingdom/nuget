@@ -22,9 +22,10 @@ static void cb1(void *field, size_t field_len, void *data) {
  * @param data Optional data which is received from the last argument of csv_parse()
  */
 static void cb2(int eol, void *data) {
+    TableCtx_t *table = (TableCtx_t*)data;
     /* TODO: validation on eol */
 
-    position.x = 0;
+    position.x = table->table_offset.x;
     position.y++;
 }
 
@@ -67,7 +68,7 @@ void read_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const file) {
 
     /* TODO: Clear table */
 
-    position = table->cursor;
+    position = table->table_offset;
     nb_read = csv_parse(csv_ctx, buf, len, cb1, cb2, (void*)table);
     if (nb_read != len) {
         csv_error(csv_ctx);

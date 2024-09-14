@@ -1,8 +1,5 @@
 #include "main.h"
 
-/* Externs */
-uint8_t cell_cwidth = 0;
-
 /**
  * @brief Initializes the curses window for use in the program.
  * @since 11-03-2024
@@ -143,7 +140,6 @@ int main(int argc, char **argv) {
 
     /* Program loop */
     while (true) {
-        clear();
         refresh_table(table);
         handle_input(table, input_seq, &seq_idx);
     }

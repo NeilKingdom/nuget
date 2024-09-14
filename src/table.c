@@ -20,11 +20,11 @@
  * @param cell A cell containing the text that needs to be padded
  * @returns A string of whitespace, which is to be prepended before cell
  */
-static char *get_right_pad(const cell_t cell) {
+static char *get_right_pad(TableCtx_t *table, const cell_t cell) {
     size_t pad_size;
     char *padding = NULL;
 
-    pad_size = cell_cwidth - strlen(cell);
+    pad_size = table->cell_width - strlen(cell);
     padding = malloc(pad_size + 1);
     if (padding == NULL) {
         perror("Failed to allocate memory for right pad");
@@ -44,11 +44,11 @@ static char *get_right_pad(const cell_t cell) {
  * @param cell A cell containing the text that needs to be padded
  * @returns A string of whitespace, which is to be prepended before cell
  */
-static char *get_center_pad(const cell_t cell) {
+static char *get_center_pad(TableCtx_t *table, const cell_t cell) {
     size_t pad_size;
     char *padding = NULL;
 
-    pad_size = (cell_cwidth - strlen(cell)) / 2;
+    pad_size = (table->cell_width - strlen(cell)) / 2;
     padding = malloc(pad_size + 1);
     if (padding == NULL) {
         perror("Failed to allocate memory for right pad");
@@ -80,13 +80,15 @@ TableCtx_t *create_table_ctx(void) {
     }
 
     /* Initialize members */
-    table->vis_cols = 12; /* TODO: User-defined cols */
-    table->vis_rows = getmaxy(stdscr);
-    cell_cwidth = getmaxx(stdscr) / table->vis_cols;
+    table->nvis_cols = 12; /* TODO: User-defined cols */
+    table->nvis_rows = getmaxy(stdscr);
+    table->table_offset = (Point_t){ 1, 1 };
+    table->cursor = table->table_offset;
+    table->cell_width = getmaxx(stdscr) / table->nvis_cols;
 
     /* Allocate memory for cell references */
-    table->cells = calloc(MAX_ROWS * MAX_COLS, sizeof(cell_t));
-    if (table->cells == NULL) {
+    table->data = calloc(MAX_ROWS * MAX_COLS, sizeof(cell_t));
+    if (table->data == NULL) {
         perror("Failed to allocate memory for table cells");
         return NULL;
     }
@@ -108,8 +110,8 @@ void destroy_table_ctx(TableCtx_t *table) {
         return;
     }
 
-    table->offset_x = 0;
-    table->offset_y = 0;
+    table->abs_offset.x = 0;
+    table->abs_offset.y = 0;
 
     for (y = 0; y < MAX_ROWS; ++y) {
         for (x = 0; x < MAX_COLS - 1; ++x) {
@@ -120,8 +122,8 @@ void destroy_table_ctx(TableCtx_t *table) {
         }
     }
 
-    if (table->cells) {
-        free(table->cells);
+    if (table->data) {
+        free(table->data);
     }
 
     free(table);
@@ -136,9 +138,9 @@ void destroy_table_ctx(TableCtx_t *table) {
  * @returns A reference to the cell located at location
  */
 cell_t *get_cell_value(TableCtx_t *table, const Point_t location) {
-    const uint64_t x = location.x + table->offset_x;
-    const uint64_t y = location.y + table->offset_y;
-    return table->cells + (y * (int)MAX_COLS) + x;
+    const uint64_t x = table->abs_offset.x + location.x;
+    const uint64_t y = table->abs_offset.y + location.y;
+    return table->data + (y * (int)MAX_COLS) + x;
 }
 
 /**
@@ -159,13 +161,13 @@ void set_cell_value(
 
     cell_t *cell = get_cell_value(table, location);
     if (*cell == NULL) {
-        *cell = malloc((cell_cwidth + 1) * sizeof(char));
+        *cell = malloc((table->cell_width + 1) * sizeof(char));
         if (*cell == NULL) {
             perror("Failed to allocate memory for cell");
             exit(EXIT_FAILURE);
         }
     }
-    strncpy(*cell, text, cell_cwidth + 1);
+    strncpy(*cell, text, table->cell_width + 1);
 }
 
 /**
@@ -175,8 +177,20 @@ void set_cell_value(
  * @param col_pair The color pair that shall be applied to the cell at location
  * @param attrs The attributes that will be applied to the cell at location
  */
-void set_cell_attrs(const Point_t location, const NugetCol_t col_pair, const uint64_t attrs) {
-    mvchgat(location.y, location.x * cell_cwidth, cell_cwidth, attrs, col_pair, NULL);
+void set_cell_attrs(
+    TableCtx_t *table,
+    const Point_t location,
+    const NugetCol_t col_pair,
+    const uint64_t attrs
+) {
+    mvchgat(
+        location.y,
+        location.x * table->cell_width,
+        table->cell_width,
+        attrs,
+        col_pair,
+        NULL
+    );
 }
 
 /**
@@ -186,22 +200,22 @@ void set_cell_attrs(const Point_t location, const NugetCol_t col_pair, const uin
  */
 void draw_col_labels(TableCtx_t *table) {
     unsigned i, x;
-    uint64_t lb, rb;
+    uint64_t msb, lsb;
     char col_id[3];
     const size_t base = 26;
 
-    lb = rb = table->offset_x;
+    msb = lsb = table->abs_offset.x;
 
-    for (x = 1, i = 0; x < table->vis_cols; ++x, ++i) {
-        col_id[0] = ((lb + i) / base) + 'A';
-        col_id[1] = ((rb + i) % base) + 'A';
+    for (x = 1, i = 0; x < table->nvis_cols; ++x, ++i) {
+        col_id[0] = ((msb + i) / base) + 'A';
+        col_id[1] = ((lsb + i) % base) + 'A';
         col_id[2] = '\0';
-        mvprintw(0, x * cell_cwidth, "%s", col_id);
+        mvprintw(0, x * table->cell_width, "%s", col_id);
 
         if (x == table->cursor.x) {
-            set_cell_attrs((Point_t){ x, 0 }, PRIMARY_INV, A_BOLD);
+            set_cell_attrs(table, (Point_t){ x, 0 }, PRIMARY_INV, A_BOLD);
         } else {
-            set_cell_attrs((Point_t){ x, 0 }, PRIMARY, A_BOLD);
+            set_cell_attrs(table, (Point_t){ x, 0 }, PRIMARY, A_BOLD);
         }
     }
 }
@@ -215,16 +229,16 @@ void draw_row_labels(TableCtx_t *table) {
     unsigned y, row_num;
     char *row_id = NULL;
 
-    for (y = 1, row_num = table->offset_y; y < table->vis_rows; ++y, ++row_num) {
+    for (y = 1, row_num = table->abs_offset.y + 1; y < table->nvis_rows; ++y, ++row_num) {
         /* TODO: Could fail if column width is too small */
         row_id = n_itoa(row_num);
         mvprintw(y, 0, "%s", row_id);
         free(row_id);
 
         if (y == table->cursor.y) {
-            set_cell_attrs((Point_t){ 0, y }, PRIMARY_INV, A_BOLD);
+            set_cell_attrs(table, (Point_t){ 0, y }, PRIMARY_INV, A_BOLD);
         } else {
-            set_cell_attrs((Point_t){ 0, y }, PRIMARY, A_BOLD);
+            set_cell_attrs(table, (Point_t){ 0, y }, PRIMARY, A_BOLD);
         }
     }
 }
@@ -244,10 +258,10 @@ void draw_cell(
     const Align_t align,
     const bool selected
 ) {
-    const uint64_t y_pos = location.y + 1;
-    const uint64_t x_pos = (location.x + 1) * cell_cwidth;
+    const uint64_t y_pos = location.y;
+    const uint64_t x_pos = location.x * table->cell_width;
     cell_t cell = *get_cell_value(table, location);
-    bool last_col = (getmaxx(stdscr) - x_pos) < cell_cwidth;
+    bool last_col = (getmaxx(stdscr) - x_pos) < table->cell_width;
     char *padding = NULL;
 
     move(y_pos, x_pos);
@@ -255,7 +269,7 @@ void draw_cell(
     if (cell != NULL && !last_col) {
         switch (align) {
             case ALIGN_CENTER:
-                padding = get_center_pad(cell);
+                padding = get_center_pad(table, cell);
                 break;
             case ALIGN_RIGHT:
                 /* TODO: Implement */
@@ -274,9 +288,9 @@ void draw_cell(
     }
 
     if (selected) {
-        set_cell_attrs(location, CURSOR, A_BOLD);
+        set_cell_attrs(table, location, CURSOR, A_BOLD);
     } else {
-        set_cell_attrs(location, DEFAULT, A_NORMAL);
+        set_cell_attrs(table, location, DEFAULT, A_NORMAL);
     }
 }
 
@@ -289,8 +303,10 @@ void refresh_table(TableCtx_t *table) {
     bool selected;
     unsigned x, y;
 
-    for (y = 0; y < table->vis_rows; ++y) {
-        for (x = 0; x < table->vis_cols; ++x) {
+    clear();
+
+    for (y = 0; y < table->nvis_rows; ++y) {
+        for (x = 0; x < table->nvis_cols; ++x) {
             selected = (y == table->cursor.y && x == table->cursor.x);
             draw_cell(table, (Point_t){ x, y }, ALIGN_LEFT, selected);
         }
@@ -309,32 +325,31 @@ void refresh_table(TableCtx_t *table) {
  * @param direction The cardinal direction in which to scroll the table
  */
 void scroll_table(TableCtx_t *table, const Direction_t direction) {
-    const uint64_t right_bound = MAX_COLS - table->vis_cols + 1;
-    const uint64_t bottom_bound = MAX_ROWS - table->vis_rows + 1;
+    const uint64_t right_bound = MAX_COLS - table->nvis_cols;
+    const uint64_t bottom_bound = MAX_ROWS - table->nvis_rows;
 
     switch (direction) {
         case LEFT:
-            if (table->offset_x > 0) {
-                --table->offset_x;
+            if (table->abs_offset.x > 0) {
+                --table->abs_offset.x;
             }
             break;
         case RIGHT:
-            if (table->offset_x < right_bound) {
-                ++table->offset_x;
+            if (table->abs_offset.x < right_bound) {
+                ++table->abs_offset.x;
             }
             break;
         case UP:
-            if (table->offset_y > 0) {
-                --table->offset_y;
+            if (table->abs_offset.y > 0) {
+                --table->abs_offset.y;
             }
             break;
         case DOWN:
-            if (table->offset_y < bottom_bound) {
-                ++table->offset_y;
+            if (table->abs_offset.y < bottom_bound) {
+                ++table->abs_offset.y;
             }
             break;
     }
 
-    clear();
     refresh_table(table);
 }
