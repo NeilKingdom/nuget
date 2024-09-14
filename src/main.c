@@ -1,6 +1,6 @@
 #include "main.h"
 
-static volatile bool sigwinch_pending = false;
+static volatile bool win_resize_pending = false;
 
 /**
  * @brief Initializes the curses window for use in the program.
@@ -11,9 +11,8 @@ static void setup_curses(void) {
     initscr();
 
     if (!has_colors()) {
-        endwin();
         fprintf(stderr, "Sorry boomer. You'll need a terminal written later than 1970 to run this program\n");
-        exit(EXIT_FAILURE);
+        quit_nuget(NULL, NULL, EXIT_FAILURE);
     }
 
     /* Enable 255 color mode */
@@ -44,8 +43,8 @@ static void setup_curses(void) {
  * @param seq_idx The current offset into the input_seq buffer
  */
 static void exec_kc_callback(TableCtx_t* table, keysym_t* input_seq, int* seq_idx) {
-    unsigned i, nmatches;
     size_t bsize, bseq_len, seq_len;
+    unsigned i, nmatches;
     KeyChord_t curr_binding;
     KeyChord_t *bindings = NULL;
 
@@ -119,11 +118,12 @@ static void handle_input(TableCtx_t* table, keysym_t* input_seq, int* seq_idx) {
     exec_kc_callback(table, input_seq, seq_idx);
 }
 
-static void resize_win(int signo) {
-    sigwinch_pending = true;
+static void set_win_resize_pending(int signo) {
+    (void)signo;
+    win_resize_pending = true;
 }
 
-static void *sig_hdlr(void *args) {
+static void *win_resize_hdlr(void *args) {
     int status;
     sigset_t sigset;
     struct sigaction act;
@@ -134,49 +134,53 @@ static void *sig_hdlr(void *args) {
     sigaddset(&sigset, SIGWINCH);
 
     act.sa_mask = sigset;
-    act.sa_handler = resize_win;
+    act.sa_handler = set_win_resize_pending;
 
-    /* Bind sigaction struct to POSIX signal */
+    /* Bind sigaction struct to SIGWINCH signal */
     status = sigaction(SIGWINCH, &act, NULL);
     if (status != 0) {
         perror("Failed to bind signal to handler");
-        exit(EXIT_FAILURE);
+        return NULL;
     }
 
     while (true) {
-        if (sigwinch_pending) {
+        if (win_resize_pending) {
             ioctl(STDERR_FILENO, TIOCGWINSZ, &ws);
             table->nvis_rows = ws.ws_row;
             table->cell_width = ws.ws_col / table->nvis_cols;
             resizeterm(ws.ws_row, ws.ws_col);
             refresh_table(table);
 
-            sigwinch_pending = false;
+            win_resize_pending = false;
         }
     }
-
-    return NULL;
 }
 
 int main(int argc, char **argv) {
     int status;
     int seq_idx = 0;
     ncsv_t csv_ctx;
-    pthread_t sig_thread;
+    pthread_t listener_thread;
     TableCtx_t *table = NULL;
     keysym_t input_seq[KEYSTROKE_MAX] = { XK_NULL };
 
-    /* Initialization */
-    setup_curses();
     table = create_table_ctx();
+    if (table == NULL) {
+        quit_nuget(NULL, NULL, EXIT_FAILURE);
+    }
 
-    pthread_create(&sig_thread, NULL, sig_hdlr, (void*)table);
+    setup_curses();
 
-    /* libcsv setup */
     status = csv_init(&csv_ctx, (CSV_APPEND_NULL | CSV_EMPTY_IS_NULL));
     if (status != 0) {
         fprintf(stderr, "Failed to initialize the CSV parser");
-        exit(EXIT_FAILURE);
+        quit_nuget(table, NULL, EXIT_FAILURE);
+    }
+
+    status = pthread_create(&listener_thread, NULL, win_resize_hdlr, (void*)table);
+    if (status != 0) {
+        fprintf(stderr, "Failed to create pthread");
+        quit_nuget(table, NULL, EXIT_FAILURE);
     }
 
     /* TODO: Action should be triggered by user */

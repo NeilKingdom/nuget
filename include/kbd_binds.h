@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "table.h"
+#include "helpers.h"
 
 #define KEYSTROKE_MAX 10
 #define XK_NULL 0
@@ -82,12 +83,10 @@ static void page_down(TableCtx_t *table, void **args) {
     table->abs_offset.y = new_offset;
 }
 
-static void quit_nuget(TableCtx_t *table, void **args) {
-    destroy_table_ctx(table);
-    endwin();
-    exit(EXIT_SUCCESS);
+static void quit_nuget_wrapper(TableCtx_t *table, void **args) {
+    /* TODO: Doesn't cleanup csv parser */
+    quit_nuget(table, NULL, EXIT_SUCCESS);
 }
-
 
 /**
  * @brief Moves the location of the cursor within the table
@@ -141,21 +140,17 @@ static void move_cursor(TableCtx_t *table, void **args) {
 
 /* Normal mode bindings */
 static KeyChord_t norm_bindings[] = {
-    { .seq = { XK_i, XK_NULL },                 .func = insert_mode,       .args = { NULL }},
-    { .seq = { XK_h, XK_NULL },                 .func = move_cursor,       .args = { &left }},
-    { .seq = { XK_j, XK_NULL },                 .func = move_cursor,       .args = { &down }},
-    { .seq = { XK_k, XK_NULL },                 .func = move_cursor,       .args = { &up }},
-    { .seq = { XK_l, XK_NULL },                 .func = move_cursor,       .args = { &right }},
-    { .seq = { XK_V, XK_NULL },                 .func = visual_mode,       .args = { NULL }},
-    { .seq = { XK_G, XK_NULL },                 .func = jump_to_bottom,    .args = { NULL }},
-    { .seq = { XK_g, XK_g, XK_NULL },           .func = jump_to_top,       .args = { NULL }},
-    { .seq = { XK_Z, XK_Z, XK_NULL },           .func = quit_nuget,        .args = { NULL }},
-    /*
-    { .seq = { XK_Control_L, XK_b, XK_NULL },   .func = page_up,           .args = NULL },
-    { .seq = { XK_Control_L, XK_f, XK_NULL },   .func = page_down,         .args = NULL },
-    */
-    { .seq = { XK_b, XK_NULL },   .func = page_up,           .args = { NULL }},
-    { .seq = { XK_f, XK_NULL },   .func = page_down,         .args = { NULL }},
+    { .seq = { XK_i, XK_NULL },       .func = insert_mode,        .args = { NULL }},
+    { .seq = { XK_h, XK_NULL },       .func = move_cursor,        .args = { &left }},
+    { .seq = { XK_j, XK_NULL },       .func = move_cursor,        .args = { &down }},
+    { .seq = { XK_k, XK_NULL },       .func = move_cursor,        .args = { &up }},
+    { .seq = { XK_l, XK_NULL },       .func = move_cursor,        .args = { &right }},
+    { .seq = { XK_V, XK_NULL },       .func = visual_mode,        .args = { NULL }},
+    { .seq = { XK_G, XK_NULL },       .func = jump_to_bottom,     .args = { NULL }},
+    { .seq = { XK_g, XK_g, XK_NULL }, .func = jump_to_top,        .args = { NULL }},
+    { .seq = { XK_Z, XK_Z, XK_NULL }, .func = quit_nuget_wrapper, .args = { NULL }},
+    { .seq = { XK_b, XK_NULL },       .func = page_up,            .args = { NULL }},
+    { .seq = { XK_f, XK_NULL },       .func = page_down,          .args = { NULL }},
 };
 
 /* Insert mode bindings */

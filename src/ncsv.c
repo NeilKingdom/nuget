@@ -1,5 +1,7 @@
 #include "ncsv.h"
 
+static Point_t top_left = { 0 };
+
 /**
  * @brief Callback invoked by csv_parse() when a field has been read.
  * @since 09-09-2024
@@ -11,8 +13,8 @@
 static void cb1(void *field, size_t field_len, void *data) {
     TableCtx_t *table = (TableCtx_t*)data;
 
-    set_cell_value(table, field, position);
-    position.x++;
+    set_cell_value(table, field, top_left);
+    top_left.x++;
 }
 
 /**
@@ -23,10 +25,10 @@ static void cb1(void *field, size_t field_len, void *data) {
  */
 static void cb2(int eol, void *data) {
     TableCtx_t *table = (TableCtx_t*)data;
-    /* TODO: validation on eol */
+    /* TODO: validation on eol? */
 
-    position.x = table->table_offset.x;
-    position.y++;
+    top_left.x = table->table_offset.x;
+    top_left.y++;
 }
 
 /**
@@ -66,9 +68,7 @@ void read_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const file) {
     }
     fread(buf, len, 1, fp);
 
-    /* TODO: Clear table */
-
-    position = table->table_offset;
+    top_left = table->table_offset;
     nb_read = csv_parse(csv_ctx, buf, len, cb1, cb2, (void*)table);
     if (nb_read != len) {
         csv_error(csv_ctx);
@@ -83,5 +83,4 @@ void read_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const file) {
 }
 
 void write_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const file) {
-
 }

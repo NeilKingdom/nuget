@@ -80,6 +80,14 @@ TableCtx_t *create_table_ctx(void) {
         return NULL;
     }
 
+    /* Allocate memory for cell references */
+    table->data = calloc(MAX_ROWS * MAX_COLS, sizeof(cell_t));
+    if (table->data == NULL) {
+        perror("Failed to allocate memory for table cells");
+        free(table);
+        return NULL;
+    }
+
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
 
     /* Initialize members */
@@ -88,13 +96,6 @@ TableCtx_t *create_table_ctx(void) {
     table->cell_width = ws.ws_col / table->nvis_cols;
     table->table_offset = (Point_t){ 1, 1 };
     table->cursor = table->table_offset;
-
-    /* Allocate memory for cell references */
-    table->data = calloc(MAX_ROWS * MAX_COLS, sizeof(cell_t));
-    if (table->data == NULL) {
-        perror("Failed to allocate memory for table cells");
-        return NULL;
-    }
 
     return table;
 }
@@ -166,8 +167,12 @@ void set_cell_value(
     if (*cell == NULL) {
         *cell = malloc((table->cell_width + 1) * sizeof(char));
         if (*cell == NULL) {
-            perror("Failed to allocate memory for cell");
-            exit(EXIT_FAILURE);
+            /* Attempt to simply make blank cell as last resort */
+            *cell = strdup("");
+            if (*cell == NULL) {
+                perror("Failed to allocate memory for cell");
+                quit_nuget(table, NULL, EXIT_FAILURE);
+            }
         }
     }
     strncpy(*cell, text, table->cell_width + 1);
@@ -247,13 +252,13 @@ void draw_row_labels(TableCtx_t *table) {
 }
 
 /**
- * @brief Draw a single cell.
- * Updates the cell's location, padding, and styling before rendering.
+ * @brief Draws a single cell at the position indicated by location.
+ * Adds padding and attributes depending upon the values given for align and selected.
  * @since 11-03-2024
  * @param table The table context object
- * @param location The new location at which the cell will be drawn
+ * @param location The location of the cell being drawn
  * @param align The preferred alignment of the cell's text
- * @param selected Should be true if the cell is currently selected or false otherwise
+ * @param selected True if the cell being drawn shares the position of the cursor, or false otherwise
  */
 void draw_cell(
     TableCtx_t *table,
@@ -265,21 +270,12 @@ void draw_cell(
     const uint64_t y_pos = location.y;
     const uint64_t x_pos = location.x * table->cell_width;
 
-    struct winsize ws;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
-
-    cell_t cell = *get_cell_value(table, location);
-    bool at_last_col = (ws.ws_col - x_pos) < table->cell_width;
-
-    size_t padding_sz;
-    size_t appended_sz;
-    size_t final_str_sz;
-
+    cell_t cell;
     char *padding = NULL;
-    char *appended = NULL;
     char *final_str = NULL;
 
-    if (cell != NULL && !at_last_col) {
+    cell = *get_cell_value(table, location);
+    if (cell != NULL) {
         switch (align) {
             case ALIGN_CENTER:
                 padding = get_center_pad(table, cell);
@@ -289,49 +285,32 @@ void draw_cell(
                 break;
             case ALIGN_LEFT:
             default:
+                padding = strdup("");
                 break;
         }
 
-        padding_sz = (padding == NULL) ? 0 : strlen(padding);
-        appended_sz = padding_sz + strlen(cell);
-        final_str_sz = table->cell_width;
-
-        appended = malloc((appended_sz + 1) * sizeof(char));
-        if (appended == NULL) {
-            perror("Failed to allocate memory for temporary buffer");
-            exit(EXIT_FAILURE);
-        }
-
-        final_str = malloc((table->cell_width + 1) * sizeof(char));
+        final_str = malloc((strlen(padding) + strlen(cell) + 1) * sizeof(char));
         if (final_str == NULL) {
-            perror("Failed to allocate memory for temporary buffer");
-            exit(EXIT_FAILURE);
+            perror("Failed to allocate memory for temporary cell");
+            goto set_attrs;
         }
 
-        /* Create appended from padding + cell text */
-        if (padding_sz > 0) {
-            strncpy(appended, padding, padding_sz);
-            strncpy(appended + padding_sz, cell, strlen(cell));
-        } else {
-            strncpy(appended, cell, strlen(cell));
-        }
-        appended[appended_sz] = '\0';
+        final_str[0] = '\0';
+        strncat(final_str, padding, strlen(padding));
+        strncat(final_str, cell, strlen(cell));
 
-        /* Add ellipses if necessary */
-        if (appended_sz > final_str_sz) {
-            strncpy(final_str, appended, final_str_sz - strlen(ellipses));
-            strncpy(final_str + final_str_sz - strlen(ellipses), ellipses, strlen(ellipses));
-        } else {
-            strncpy(final_str, appended, final_str_sz);
+        if (strlen(final_str) > table->cell_width) {
+            strncpy(final_str + strlen(final_str) - strlen(ellipses) - 1, ellipses, strlen(ellipses) + 1);
         }
-        final_str[final_str_sz] = '\0';
 
         mvprintw(location.y, location.x * table->cell_width, "%s", final_str);
         free(padding);
-        free(appended);
         free(final_str);
     }
 
+set_attrs:
+
+    /* Set appropriate attributes for the cell */
     if (selected) {
         set_cell_attrs(table, location, CURSOR, A_BOLD);
     } else {
@@ -346,19 +325,18 @@ void draw_cell(
  */
 void refresh_table(TableCtx_t *table) {
     bool selected;
-    unsigned x, y;
+    uint64_t x, y;
 
     clear();
+    draw_row_labels(table);
+    draw_col_labels(table);
 
-    for (y = 0; y < table->nvis_rows; ++y) {
-        for (x = 0; x < table->nvis_cols; ++x) {
-            selected = (y == table->cursor.y && x == table->cursor.x);
+    for (y = table->table_offset.y; y < table->nvis_rows; ++y) {
+        for (x = table->table_offset.x; x < table->nvis_cols; ++x) {
+            selected = (x == table->cursor.x) && (y == table->cursor.y);
             draw_cell(table, (Point_t){ x, y }, ALIGN_LEFT, selected);
         }
     }
-
-    draw_row_labels(table);
-    draw_col_labels(table);
 
     refresh();
 }
