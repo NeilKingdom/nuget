@@ -2,7 +2,7 @@ CC = gcc
 PROFILE ?= DEBUG
 
 CCFLAGS_DEBUG = -ggdb -O0 -fno-builtin -DDEBUG
-CCLFLAGS_RELEASE = -O2
+CCLFLAGS_RELEASE = -Os
 
 SRC_DIR := src
 INC_DIR := include

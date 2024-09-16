@@ -29,7 +29,7 @@ static void setup_curses(void) {
     /* TTY setup */
     raw();                  /* Disables input buffering and POSIX signals */
     curs_set(0);            /* Set cursor invisible */
-    noecho();               /* Don't echo typed characters to the TTY */
+    noecho();               /* Don't echo characters typed in the TTY */
     keypad(stdscr, true);   /* Enable special keys e.g. function keys */
 
     clear();
@@ -145,7 +145,7 @@ static void *win_resize_hdlr(void *args) {
 
     while (true) {
         if (win_resize_pending) {
-            ioctl(STDERR_FILENO, TIOCGWINSZ, &ws);
+            ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
             table->nvis_rows = ws.ws_row;
             table->cell_width = ws.ws_col / table->nvis_cols;
             resizeterm(ws.ws_row, ws.ws_col);

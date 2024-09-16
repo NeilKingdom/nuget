@@ -100,29 +100,25 @@ TableCtx_t *create_table_ctx(void) {
     return table;
 }
 
-/* TODO: Works for now but is slow. Use CSV file to determine which cell values to free */
 /**
- * @brief Destroys a table context object
+ * @brief Destroys a table context object.
  * @since 11-03-2024
  * @param table The table context object to be destroyed
  */
 void destroy_table_ctx(TableCtx_t *table) {
+    const uint64_t table_size = MAX_ROWS * MAX_COLS;
+    uint64_t i = 0;
     cell_t *cell = NULL;
-    uint64_t x, y;
 
     if (table == NULL) {
         return;
     }
 
-    table->abs_offset.x = 0;
-    table->abs_offset.y = 0;
-
-    for (y = 0; y < MAX_ROWS; ++y) {
-        for (x = 0; x < MAX_COLS - 1; ++x) {
-            cell = get_cell_value(table, (Point_t){ x, y });
-            if (*cell) {
-                free(*cell);
-            }
+    /* Too slow to call get_cell_value(), so need a bit of optimization */
+    cell = table->data;
+    while (i++ < table_size) {
+        if (*(cell + i)) {
+            free(*(cell + i));
         }
     }
 
@@ -275,7 +271,7 @@ void draw_cell(
     char *final_str = NULL;
 
     cell = *get_cell_value(table, location);
-    if (cell != NULL) {
+    if (cell != NULL && table->cell_width >= strlen(ellipses)) {
         switch (align) {
             case ALIGN_CENTER:
                 padding = get_center_pad(table, cell);
@@ -300,7 +296,7 @@ void draw_cell(
         strncat(final_str, cell, strlen(cell));
 
         if (strlen(final_str) > table->cell_width) {
-            strncpy(final_str + strlen(final_str) - strlen(ellipses) - 1, ellipses, strlen(ellipses) + 1);
+            strncpy(final_str + table->cell_width - strlen(ellipses), ellipses, strlen(ellipses) + 1);
         }
 
         mvprintw(location.y, location.x * table->cell_width, "%s", final_str);
