@@ -83,4 +83,11 @@ void read_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const file) {
 }
 
 void write_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const file) {
+    /**
+     * TODO: write_csv_data ought to be a wrapper around csv_write() which writes
+     * individual fields to the output file. A structure monitors the right-most
+     * and bottom-most cells that contain data within the table. This determines
+     * the area/range that we need to loop through, rather than writing the
+     * entire table, which wastes time and disk space.
+     */
 }

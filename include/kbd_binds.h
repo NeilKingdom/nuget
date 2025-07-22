@@ -56,6 +56,16 @@ static void visual_mode(TableCtx_t *table, void **args) {
     curr_mode = VISUAL;
 }
 
+static void jump_to_start(TableCtx_t *table, void **args) {
+    table->abs_offset.x = 0;
+    table->cursor.x = table->table_offset.x;
+}
+
+static void jump_to_end(TableCtx_t *table, void **args) {
+    table->abs_offset.x = MAX_COLS - table->nvis_cols;
+    table->cursor.x = table->nvis_cols - 1;
+}
+
 static void jump_to_top(TableCtx_t *table, void **args) {
     table->abs_offset.y = 0;
     table->cursor.y = table->table_offset.y;
@@ -146,6 +156,8 @@ static KeyChord_t norm_bindings[] = {
     { .seq = { XK_k, XK_NULL },       .func = move_cursor,        .args = { &up }},
     { .seq = { XK_l, XK_NULL },       .func = move_cursor,        .args = { &right }},
     { .seq = { XK_V, XK_NULL },       .func = visual_mode,        .args = { NULL }},
+    { .seq = { XK_0, XK_NULL },       .func = jump_to_start,      .args = { NULL }},
+    { .seq = { XK_dollar, XK_NULL },  .func = jump_to_end,        .args = { NULL }},
     { .seq = { XK_G, XK_NULL },       .func = jump_to_bottom,     .args = { NULL }},
     { .seq = { XK_g, XK_g, XK_NULL }, .func = jump_to_top,        .args = { NULL }},
     { .seq = { XK_Z, XK_Z, XK_NULL }, .func = quit_nuget_wrapper, .args = { NULL }},

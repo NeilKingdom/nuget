@@ -1,5 +1,5 @@
-obj
 nuget
-compile_flags.txt
+obj
+compile_commands.json
+.cache
 2024.csv
-TODO.md

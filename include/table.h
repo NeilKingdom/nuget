@@ -12,8 +12,8 @@ typedef struct {
     uint8_t  nvis_cols;     /* The number of currently visible columns on the page */
     uint8_t  nvis_rows;     /* The number of currently visible rows on the page */
     uint8_t  cell_width;    /* Character width of an individual cell */
-    Point_t  abs_offset;    /* Offset relative to the absolute top left coordinates*/
-    Point_t  table_offset;  /* Offset relative to the screen's top left coordinates */
+    Point_t  abs_offset;    /* Offset relative to the absolute coordinates */
+    Point_t  table_offset;  /* Offset relative to the screen's coordinates */
     Point_t  cursor;        /* The cursor location relative to the screen's coordinates */
     cell_t  *data;          /* Table data */
 } TableCtx_t;

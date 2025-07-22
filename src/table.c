@@ -14,44 +14,32 @@
 
 /**
  * @brief Returns a string of padding to be placed before the cell's contents.
- * Uses the cell_cwidth to determine how much space should be prepended to
- * the string contained in cell such that the text is aligned to the right of
- * the cell.
+ * Uses cell_width to determine how much space should be prepended to the text
+ * contained in cell such that the text is aligned to the right of the cell.
+ * @param align The desired alignment of the text belonging to cell
  * @param cell A cell containing the text that needs to be padded
  * @returns A string of whitespace, which is to be prepended before cell
  */
-static char *get_right_pad(TableCtx_t *table, const cell_t cell) {
+static char *get_cell_padding(TableCtx_t *table, const Align_t align, const cell_t cell) {
     size_t pad_size;
     char *padding = NULL;
 
-    pad_size = table->cell_width - strlen(cell);
-    padding = malloc(pad_size + 1);
-    if (padding == NULL) {
-        perror("Failed to allocate memory for right pad");
-        return NULL;
+    if (align == ALIGN_LEFT || strlen(cell) >= table->cell_width) {
+        padding = strdup("");
+        if (padding == NULL) {
+            perror("Failed to allocate memory for padding");
+            return NULL;
+        }
+        return padding;
+    } else if (align == ALIGN_CENTER) {
+        pad_size = (table->cell_width - strlen(cell)) / 2;
+    } else if (align == ALIGN_RIGHT) {
+        pad_size = table->cell_width - strlen(cell);
     }
-    memset((void*)padding, ' ', pad_size);
-    padding[pad_size] = '\0';
 
-    return padding;
-}
-
-/**
- * @brief Returns a string of padding to be placed before the cell's contents.
- * Uses the cell_cwidth to determine how much space should be prepended to
- * the string contained in cell such that the text is centered.
- * @since 03-11-2024
- * @param cell A cell containing the text that needs to be padded
- * @returns A string of whitespace, which is to be prepended before cell
- */
-static char *get_center_pad(TableCtx_t *table, const cell_t cell) {
-    size_t pad_size;
-    char *padding = NULL;
-
-    pad_size = (table->cell_width - strlen(cell)) / 2;
-    padding = malloc(pad_size + 1);
+    padding = malloc((pad_size + 1) * sizeof(char));
     if (padding == NULL) {
-        perror("Failed to allocate memory for right pad");
+        perror("Failed to allocate memory for padding");
         return NULL;
     }
     memset((void*)padding, ' ', pad_size);
@@ -272,18 +260,7 @@ void draw_cell(
 
     cell = *get_cell_value(table, location);
     if (cell != NULL && table->cell_width >= strlen(ellipses)) {
-        switch (align) {
-            case ALIGN_CENTER:
-                padding = get_center_pad(table, cell);
-                break;
-            case ALIGN_RIGHT:
-                padding = get_right_pad(table, cell);
-                break;
-            case ALIGN_LEFT:
-            default:
-                padding = strdup("");
-                break;
-        }
+        padding = get_cell_padding(table, align, cell);
 
         final_str = malloc((strlen(padding) + strlen(cell) + 1) * sizeof(char));
         if (final_str == NULL) {
