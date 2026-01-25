@@ -22,17 +22,17 @@ typedef enum {
 static Mode_t curr_mode = NORMAL;
 
 typedef struct {
-    keysym_t    seq[KEYSTROKE_MAX]; /* The sequence of keys that make up the chord (NULL-terminated) */
-    kc_callback func;               /* A callback to be performed when the sequence is completed */
-    void       *args[8];            /* Argument list for the function */
+    keysym_t    seq[KEYSTROKE_MAX]; // The sequence of keys that make up the chord (NULL-terminated)
+    kc_callback func;               // A callback to be performed when the sequence is completed
+    void       *args[8];            // Argument list for the function
 } KeyChord_t;
 
 /*** Static declarations ***/
 
-static Direction_t left     = LEFT;
-static Direction_t right    = RIGHT;
-static Direction_t up       = UP;
-static Direction_t down     = DOWN;
+static Direction_t left  = LEFT;
+static Direction_t right = RIGHT;
+static Direction_t up    = UP;
+static Direction_t down  = DOWN;
 
 /*** Callbacks ***/
 
@@ -94,7 +94,7 @@ static void page_down(TableCtx_t *table, void **args) {
 }
 
 static void quit_nuget_wrapper(TableCtx_t *table, void **args) {
-    /* TODO: Doesn't cleanup csv parser */
+    // TODO: Doesn't cleanup csv parser
     quit_nuget(table, NULL, EXIT_SUCCESS);
 }
 
@@ -148,7 +148,7 @@ static void move_cursor(TableCtx_t *table, void **args) {
 
 /*** Bindings ***/
 
-/* Normal mode bindings */
+// Normal mode bindings
 static KeyChord_t norm_bindings[] = {
     { .seq = { XK_i, XK_NULL },       .func = insert_mode,        .args = { NULL }},
     { .seq = { XK_h, XK_NULL },       .func = move_cursor,        .args = { &left }},
@@ -165,14 +165,14 @@ static KeyChord_t norm_bindings[] = {
     { .seq = { XK_f, XK_NULL },       .func = page_down,          .args = { NULL }},
 };
 
-/* Insert mode bindings */
+// Insert mode bindings
 static KeyChord_t ins_bindings[] = {
-    { .seq = { XK_Escape, XK_NULL },    .func = normal_mode,    .args = { NULL }}
+    { .seq = { XK_Escape, XK_NULL }, .func = normal_mode, .args = { NULL }}
 };
 
-/* Visual mode bindings */
+// Visual mode bindings
 static KeyChord_t vis_bindings[] = {
-    { .seq = { XK_Escape, XK_NULL },    .func = normal_mode,    .args = { NULL }},
+    { .seq = { XK_Escape, XK_NULL }, .func = normal_mode, .args = { NULL }},
 };
 
-#endif /* KBD_H */
+#endif

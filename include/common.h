@@ -42,12 +42,12 @@ typedef enum {
 } Direction_t;
 
 typedef enum {
-    DEFAULT = 1,    /* Default/background color pair */
-    PRIMARY,        /* Primary color pair */
-    PRIMARY_INV,    /* Primary color pair (inverted) */
-    SECONDARY,      /* Secondary color pair */
-    SECONDARY_INV,  /* Secondary color pair (inverted) */
-    CURSOR,         /* Cursor color pair */
+    DEFAULT = 1,    // Default/background color pair
+    PRIMARY,        // Primary color pair
+    PRIMARY_INV,    // Primary color pair (inverted)
+    SECONDARY,      // Secondary color pair
+    SECONDARY_INV,  // Secondary color pair (inverted)
+    CURSOR,         // Cursor color pair
 } NugetCol_t;
 
 #define TEXT_COLOR          COLOR_WHITE
@@ -63,4 +63,4 @@ typedef enum {
 #define SECONDARY_INV_PAIR  SECONDARY_COLOR, BG_COLOR
 #define CURSOR_PAIR         TEXT_COLOR,      CURSOR_COLOR
 
-#endif /* COMMON_H */
+#endif

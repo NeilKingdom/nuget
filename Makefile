@@ -12,7 +12,7 @@ SRCS := $(wildcard $(SRC_DIR)/*.c)
 DEPS := $(wildcard $(INC_DIR)/*.h)
 OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 
-CCFLAGS += $(CCFLAGS_$(PROFILE)) -I$(INC_DIR) -Wall -Wextra -Wformat #-Werror
+CCFLAGS += $(CCFLAGS_$(PROFILE)) -I$(INC_DIR) -Wall -Wextra
 LDFLAGS += -lc -lm -lcurses -lcsv
 
 BIN := nuget

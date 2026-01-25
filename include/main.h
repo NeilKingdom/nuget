@@ -9,4 +9,4 @@
 #include "kbd_binds.h"
 #include "ncsv.h"
 
-#endif /* MAIN_H */
+#endif

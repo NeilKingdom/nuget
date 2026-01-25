@@ -25,7 +25,7 @@ static void cb1(void *field, size_t field_len, void *data) {
  */
 static void cb2(int eol, void *data) {
     TableCtx_t *table = (TableCtx_t*)data;
-    /* TODO: validation on eol? */
+    // TODO: validation on eol?
 
     top_left.x = table->table_offset.x;
     top_left.y++;
@@ -38,20 +38,17 @@ static void cb2(int eol, void *data) {
  * @param csv_ctx A reference to the CSV context object
  * @param file Absolute path to the CSV file that shall be parsed
  */
-void read_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const file) {
+void read_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const fname) {
     size_t len, nb_read;
-    void *buf = NULL;
-    FILE *fp = NULL;
-    struct stat info;
-
-    fp = fopen(file, "r");
+    FILE *fp = fopen(fname, "r");
     if (fp == NULL) {
         perror("Failed to open CSV file for read");
         exit(EXIT_FAILURE);
     }
 
-    /* TODO: Validate that it is a CSV file (mimetype?) */
+    // TODO: Validate that it is a CSV file (mimetype?)
 
+    struct stat info = { 0 };
     fstat(fileno(fp), &info);
     len = (size_t)info.st_size;
     if (len == 0) {
@@ -59,7 +56,7 @@ void read_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const file) {
         return;
     }
 
-    buf = malloc(len * sizeof(char));
+    void *buf = malloc(len * sizeof(char));
     if (buf == NULL) {
         perror("Failed to allocate space for temporary buffer");
         csv_free(csv_ctx);

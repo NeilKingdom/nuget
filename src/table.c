@@ -21,16 +21,11 @@
  * @returns A string of whitespace, which is to be prepended before cell
  */
 static char *get_cell_padding(TableCtx_t *table, const Align_t align, const cell_t cell) {
-    size_t pad_size;
+    size_t pad_size = 0;
     char *padding = NULL;
 
     if (align == ALIGN_LEFT || strlen(cell) >= table->cell_width) {
-        padding = strdup("");
-        if (padding == NULL) {
-            perror("Failed to allocate memory for padding");
-            return NULL;
-        }
-        return padding;
+        return strdup("");
     } else if (align == ALIGN_CENTER) {
         pad_size = (table->cell_width - strlen(cell)) / 2;
     } else if (align == ALIGN_RIGHT) {
@@ -58,17 +53,14 @@ static char *get_cell_padding(TableCtx_t *table, const Align_t align, const cell
  * @returns A reference to the table context object
  */
 TableCtx_t *create_table_ctx(void) {
-    struct winsize ws;
-    TableCtx_t *table = NULL;
-
-    /* Allocate memory for table struct */
-    table = calloc(1, sizeof(TableCtx_t));
+    // Allocate memory for table struct
+    TableCtx_t *table = calloc(1, sizeof(TableCtx_t));
     if (table == NULL) {
         perror("Failed to allocate memory for table context");
         return NULL;
     }
 
-    /* Allocate memory for cell references */
+    // Allocate memory for cell references
     table->data = calloc(MAX_ROWS * MAX_COLS, sizeof(cell_t));
     if (table->data == NULL) {
         perror("Failed to allocate memory for table cells");
@@ -76,10 +68,11 @@ TableCtx_t *create_table_ctx(void) {
         return NULL;
     }
 
+    struct winsize ws;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
 
-    /* Initialize members */
-    table->nvis_cols = 12; /* TODO: User-defined cols */
+    // Initialize members
+    table->nvis_cols = 12; // TODO: User-defined cols
     table->nvis_rows = ws.ws_row;
     table->cell_width = ws.ws_col / table->nvis_cols;
     table->table_offset = (Point_t){ 1, 1 };
@@ -95,18 +88,16 @@ TableCtx_t *create_table_ctx(void) {
  */
 void destroy_table_ctx(TableCtx_t *table) {
     const uint64_t table_size = MAX_ROWS * MAX_COLS;
-    uint64_t i = 0;
-    cell_t *cell = NULL;
 
     if (table == NULL) {
         return;
     }
 
-    /* Too slow to call get_cell_value(), so need a bit of optimization */
-    cell = table->data;
-    while (i++ < table_size) {
-        if (*(cell + i)) {
-            free(*(cell + i));
+    // Too slow to call get_cell_value(), so need a bit of optimization
+    cell_t *cell = table->data;
+    for (uint64_t i = 0; i < table_size; ++i) {
+        if (cell[i]) {
+            free(cell[i]);
         }
     }
 
@@ -151,7 +142,7 @@ void set_cell_value(
     if (*cell == NULL) {
         *cell = malloc((table->cell_width + 1) * sizeof(char));
         if (*cell == NULL) {
-            /* Attempt to simply make blank cell as last resort */
+            // Attempt to simply make blank cell as last resort
             *cell = strdup("");
             if (*cell == NULL) {
                 perror("Failed to allocate memory for cell");
@@ -191,14 +182,13 @@ void set_cell_attrs(
  * @param table The table context object
  */
 void draw_col_labels(TableCtx_t *table) {
-    unsigned i, x;
-    uint64_t msb, lsb;
-    char col_id[3];
     const size_t base = 26;
 
+    uint64_t msb, lsb;
     msb = lsb = table->abs_offset.x;
 
-    for (x = 1, i = 0; x < table->nvis_cols; ++x, ++i) {
+    char col_id[3];
+    for (unsigned x = 1, i = 0; x < table->nvis_cols; ++x, ++i) {
         col_id[0] = ((msb + i) / base) + 'A';
         col_id[1] = ((lsb + i) % base) + 'A';
         col_id[2] = '\0';
@@ -218,11 +208,9 @@ void draw_col_labels(TableCtx_t *table) {
  * @param table The table context object
  */
 void draw_row_labels(TableCtx_t *table) {
-    unsigned y, row_num;
     char *row_id = NULL;
-
-    for (y = 1, row_num = table->abs_offset.y + 1; y < table->nvis_rows; ++y, ++row_num) {
-        /* TODO: Could fail if column width is too small */
+    for (unsigned y = 1, row_num = table->abs_offset.y + 1; y < table->nvis_rows; ++y, ++row_num) {
+        // TODO: Could fail if column width is too small
         row_id = n_itoa(row_num);
         mvprintw(y, 0, "%s", row_id);
         free(row_id);
@@ -251,14 +239,10 @@ void draw_cell(
     const bool selected
 ) {
     const char *ellipses = "...";
-    const uint64_t y_pos = location.y;
-    const uint64_t x_pos = location.x * table->cell_width;
-
-    cell_t cell;
     char *padding = NULL;
     char *final_str = NULL;
 
-    cell = *get_cell_value(table, location);
+    cell_t cell = *get_cell_value(table, location);
     if (cell != NULL && table->cell_width >= strlen(ellipses)) {
         padding = get_cell_padding(table, align, cell);
 
@@ -283,7 +267,7 @@ void draw_cell(
 
 set_attrs:
 
-    /* Set appropriate attributes for the cell */
+    // Set appropriate attributes for the cell
     if (selected) {
         set_cell_attrs(table, location, CURSOR, A_BOLD);
     } else {
@@ -297,15 +281,13 @@ set_attrs:
  * @param table The table context object
  */
 void refresh_table(TableCtx_t *table) {
-    bool selected;
-    uint64_t x, y;
-
     clear();
     draw_row_labels(table);
     draw_col_labels(table);
 
-    for (y = table->table_offset.y; y < table->nvis_rows; ++y) {
-        for (x = table->table_offset.x; x < table->nvis_cols; ++x) {
+    bool selected;
+    for (uint64_t y = table->table_offset.y; y < table->nvis_rows; ++y) {
+        for (uint64_t x = table->table_offset.x; x < table->nvis_cols; ++x) {
             selected = (x == table->cursor.x) && (y == table->cursor.y);
             draw_cell(table, (Point_t){ x, y }, ALIGN_LEFT, selected);
         }

@@ -5,7 +5,7 @@
 #include "ncsv.h"
 #include "table.h"
 
-/* Forward function declarations */
+// Forward function declarations
 
 char *n_itoa(const uint64_t n);
 uint64_t n_atoi(const char* const a);
@@ -14,4 +14,4 @@ double n_atod(const char* const a);
 Color_t hex_to_rgb(const char* const hex);
 void quit_nuget(TableCtx_t *table, ncsv_t *csv, int status);
 
-#endif /* HELPERS_H */
+#endif

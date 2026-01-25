@@ -7,28 +7,26 @@
  * @returns A string representation of the digit n
  */
 char *n_itoa(const uint64_t n) {
-    int i, tmp = n;
+    uint64_t tmp = n;
     unsigned digits = 0;
-    char *a = NULL;
 
     do {
         digits++;
         tmp /= 10;
     } while (tmp);
 
-    a = malloc((digits + 1) * sizeof(char));
+    char *a = malloc((digits + 1) * sizeof(char));
     if (a == NULL) {
         perror("Failed to allocate memory for buffer");
         return NULL;
     }
 
-    for (i = digits, tmp = n; i > 0; --i) {
+    for (int i = digits, tmp = n; i > 0; --i) {
         a[i - 1] = (tmp % 10) + '0';
         tmp /= 10;
     }
 
     a[digits] = '\0';
-
     return a;
 }
 
@@ -70,39 +68,30 @@ double n_atod(const char* const a) {
  */
 Color_t hex_to_rgb(const char* const hex) {
     const size_t nibbles = 2;
-    int bad_range;
-    unsigned i;
-    Color_t color = { 0 };
     char *r = alloca(nibbles + 1);
     char *g = alloca(nibbles + 1);
     char *b = alloca(nibbles + 1);
-    char *hex_copy = NULL;
 
-    hex_copy = malloc((strlen(hex) + 1) * sizeof(char));
-    if (hex_copy == NULL) {
-        perror("Failed to allocate space for temporary buffer");
-        return color;
-    }
-    strncpy(hex_copy, hex, strlen(hex) + 1);
+    char *hex_copy = strdup(hex);
 
-    /* Validation */
+    // Validation
     assert(strlen(hex_copy) == 7);
     assert(hex_copy[0] == '#');
 
-    for (i = 1; i < strlen(hex_copy); ++i) {
+    for (size_t i = 1; i < strlen(hex_copy); ++i) {
         hex_copy[i] = (char)toupper(hex_copy[i]);
         assert(isdigit(hex_copy[i]) || (hex_copy[i] >= 'A' && hex_copy[i] <= 'F'));
     }
 
-    /* Split into color channels */
-    strncpy(r, hex_copy, nibbles + 1);
-    hex_copy += nibbles;
-    strncpy(g, hex_copy, nibbles + 1);
-    hex_copy += nibbles;
-    strncpy(b, hex_copy, nibbles + 1);
+    // Split into color channels
+    strncpy(r, hex_copy + (nibbles * 0), sizeof(*r));
+    strncpy(g, hex_copy + (nibbles * 1), sizeof(*g));
+    strncpy(b, hex_copy + (nibbles * 2), sizeof(*b));
 
-    /* Compute rgb888 values */
-    bad_range = 'A' - '9' - 1; /* Unused ASCII chars between digits and uppercase */
+    // Compute RGB888 values
+    int bad_range = 'A' - '9' - 1; // Unused ASCII chars between digits and uppercase
+
+    Color_t color = { 0 };
     color.r |= (r[0] <= '9') ? (r[0] - '0') << 4 : (r[0] - '0' - bad_range) << 4;
     color.r |= (r[1] <= '9') ? (r[1] - '0')      : (r[1] - '0' - bad_range);
     color.g |= (g[0] <= '9') ? (g[0] - '0') << 4 : (g[0] - '0' - bad_range) << 4;
@@ -110,22 +99,19 @@ Color_t hex_to_rgb(const char* const hex) {
     color.b |= (b[0] <= '9') ? (b[0] - '0') << 4 : (b[0] - '0' - bad_range) << 4;
     color.b |= (b[1] <= '9') ? (b[1] - '0')      : (b[1] - '0' - bad_range);
 
-    /* Cleanup */
-    hex_copy -= (nibbles + nibbles + 1);
     free(hex_copy);
-
     return color;
 }
 
-/* TODO: Is this the best spot for this? */
+// TODO: Is this the best spot for this?
 void quit_nuget(TableCtx_t *table, ncsv_t *csv, int status) {
-    /* ncurses cleanup */
+    // ncurses cleanup
     if (table != NULL) {
         destroy_table_ctx(table);
     }
     endwin();
 
-    /* libcsv cleanup */
+    // libcsv cleanup
     if (csv != NULL) {
         csv_free(csv);
     }
