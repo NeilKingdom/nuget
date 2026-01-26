@@ -11,7 +11,11 @@ static void setup_curses(void) {
     initscr();
 
     if (!has_colors()) {
-        fprintf(stderr, "Sorry boomer. You'll need a terminal written later than 1970 to run this program\n");
+        fprintf(
+            stderr,
+            "Sorry boomer. You'll need a terminal "
+            "written later than 1970 to run this program\n"
+        );
         quit_nuget(NULL, NULL, EXIT_FAILURE);
     }
 

@@ -34,8 +34,6 @@ static Direction_t right = RIGHT;
 static Direction_t up    = UP;
 static Direction_t down  = DOWN;
 
-/*** Callbacks ***/
-
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -46,6 +44,62 @@ static Direction_t down  = DOWN;
 
 static void insert_mode(TableCtx_t *table, void **args) {
     curr_mode = INSERT;
+
+    Cell_t *cell = get_cell(table, table->cursor);
+    unsigned width = MIN(MAX(cell->len, table->cell_width), table->cell_width * 4);
+    unsigned height = (int)ceilf((float)cell->len / (float)width);
+    WINDOW *dialog = newwin(height, width, table->cursor.y, table->cursor.x * table->cell_width);
+    PANEL *dialog_panel = new_panel(dialog);
+
+    char buffer[256];
+    unsigned buflen = MIN(cell->len, sizeof(buffer) - 1);
+    memcpy(buffer, cell->str, buflen);
+    buffer[buflen] = '\0';
+
+    keysym_t c;
+    do {
+        width = MIN(MAX(buflen, table->cell_width), table->cell_width * 4);
+        height = (int)ceilf((float)buflen / (float)width);
+        wresize(dialog, height, width);
+
+        wclear(dialog);
+        for (unsigned y = 0; y < height; ++y) {
+            unsigned nchars_prior = y * width;
+            if (nchars_prior >= buflen) {
+                break;
+            }
+            mvwprintw(dialog, y, 0, "%.*s", MIN(width, buflen - nchars_prior), buffer + nchars_prior);
+            mvwchgat(dialog, y, 0, width, NORMAL, SECONDARY, NULL);
+        }
+
+        int cursor_y = buflen / width;
+        int cursor_x = buflen % width;
+        wmove(dialog, cursor_y, cursor_x);
+
+        top_panel(dialog_panel);
+        update_panels();
+        doupdate();
+
+        c = (keysym_t)wgetch(dialog);
+        if (buflen < sizeof(buffer) && c >= ' ' && c <= '~') {
+            buffer[buflen++] = c;
+        }
+    } while (c != '\n' && c != XK_Escape);
+
+    if (c == '\n') {
+        buffer[buflen] = '\0';
+        set_cell_text(table, table->cursor, buffer);
+    }
+
+    del_panel(dialog_panel);
+    delwin(dialog);
+    update_panels();
+    doupdate();
+
+    // Rerender in table
+    render_cell(table, table->cursor, ALIGN_LEFT, true);
+
+    curr_mode = NORMAL;
 }
 
 static void normal_mode(TableCtx_t *table, void **args) {

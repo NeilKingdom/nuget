@@ -20,27 +20,49 @@
  * @param cell A cell containing the text that needs to be padded
  * @returns A string of whitespace, which is to be prepended before cell
  */
-static char *get_cell_padding(TableCtx_t *table, const Align_t align, const cell_t cell) {
-    size_t pad_size = 0;
-    char *padding = NULL;
+//static char *get_cell_padding(TableCtx_t *table, const Align_t align, const Cell_t cell) {
+//    size_t pad_size = 0;
+//
+//    if (align == ALIGN_LEFT || cell.len >= table->cell_width) {
+//        return strdup("");
+//    } else if (align == ALIGN_CENTER) {
+//        pad_size = (table->cell_width - cell.len) / 2;
+//    } else if (align == ALIGN_RIGHT) {
+//        pad_size = table->cell_width - cell.len;
+//    }
+//
+//    char *padding = malloc((pad_size + 1) * sizeof(char));
+//    if (padding == NULL) {
+//        perror("Failed to allocate memory for padding");
+//        return NULL;
+//    }
+//    memset((void*)padding, ' ', pad_size);
+//    padding[pad_size] = '\0';
+//
+//    return padding;
+//}
 
-    if (align == ALIGN_LEFT || strlen(cell) >= table->cell_width) {
-        return strdup("");
-    } else if (align == ALIGN_CENTER) {
-        pad_size = (table->cell_width - strlen(cell)) / 2;
-    } else if (align == ALIGN_RIGHT) {
-        pad_size = table->cell_width - strlen(cell);
-    }
-
-    padding = malloc((pad_size + 1) * sizeof(char));
-    if (padding == NULL) {
-        perror("Failed to allocate memory for padding");
-        return NULL;
-    }
-    memset((void*)padding, ' ', pad_size);
-    padding[pad_size] = '\0';
-
-    return padding;
+/**
+ * @brief Helper function which applies colors and other attributes to a cell in the table.
+ * @since 08-09-2024
+ * @param location The location of the cell that will be updated
+ * @param col_pair The color pair that shall be applied to the cell at location
+ * @param attrs The attributes that will be applied to the cell at location
+ */
+static void set_cell_attrs(
+    TableCtx_t *table,
+    const Point_t location,
+    const ColorPair_t col_pair,
+    const CellAttrs_t attrs
+) {
+    mvchgat(
+        location.y,
+        location.x * table->cell_width,
+        table->cell_width,
+        attrs,
+        col_pair,
+        NULL
+    );
 }
 
 /*==============================
@@ -60,14 +82,6 @@ TableCtx_t *create_table_ctx(void) {
         return NULL;
     }
 
-    // Allocate memory for cell references
-    table->data = calloc(MAX_ROWS * MAX_COLS, sizeof(cell_t));
-    if (table->data == NULL) {
-        perror("Failed to allocate memory for table cells");
-        free(table);
-        return NULL;
-    }
-
     struct winsize ws;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
 
@@ -78,6 +92,14 @@ TableCtx_t *create_table_ctx(void) {
     table->table_offset = (Point_t){ 1, 1 };
     table->cursor = table->table_offset;
 
+    // Allocate memory for cell references
+    table->arena = calloc(MAX_ROWS * MAX_COLS, sizeof(Cell_t));
+    if (table->arena == NULL) {
+        perror("Failed to allocate memory for table cells");
+        free(table);
+        return NULL;
+    }
+
     return table;
 }
 
@@ -87,22 +109,20 @@ TableCtx_t *create_table_ctx(void) {
  * @param table The table context object to be destroyed
  */
 void destroy_table_ctx(TableCtx_t *table) {
-    const uint64_t table_size = MAX_ROWS * MAX_COLS;
-
     if (table == NULL) {
         return;
     }
 
-    // Too slow to call get_cell_value(), so need a bit of optimization
-    cell_t *cell = table->data;
+    Cell_t *cell = table->arena;
+    const uint64_t table_size = MAX_ROWS * MAX_COLS;
     for (uint64_t i = 0; i < table_size; ++i) {
-        if (cell[i]) {
-            free(cell[i]);
+        if ((cell + i)->str) {
+            free((cell + i)->str);
         }
     }
 
-    if (table->data) {
-        free(table->data);
+    if (table->arena) {
+        free(table->arena);
     }
 
     free(table);
@@ -116,10 +136,10 @@ void destroy_table_ctx(TableCtx_t *table) {
  * @param location The location of the cell that will be returned
  * @returns A reference to the cell located at location
  */
-cell_t *get_cell_value(TableCtx_t *table, const Point_t location) {
+Cell_t *get_cell(TableCtx_t *table, const Point_t location) {
     const uint64_t x = table->abs_offset.x + location.x;
     const uint64_t y = table->abs_offset.y + location.y;
-    return table->data + (y * (int)MAX_COLS) + x;
+    return table->arena + (y * (int)MAX_COLS) + x;
 }
 
 /**
@@ -129,51 +149,28 @@ cell_t *get_cell_value(TableCtx_t *table, const Point_t location) {
  * @param text Text to update the cell with
  * @param location The location of the cell that shall be updated
  */
-void set_cell_value(
+void set_cell_text(
     TableCtx_t *table,
-    const char* const text,
-    const Point_t location
+    const Point_t location,
+    const char* const text
 ) {
     if (text == NULL) {
         return;
     }
 
-    cell_t *cell = get_cell_value(table, location);
-    if (*cell == NULL) {
-        *cell = malloc((table->cell_width + 1) * sizeof(char));
-        if (*cell == NULL) {
-            // Attempt to simply make blank cell as last resort
-            *cell = strdup("");
-            if (*cell == NULL) {
-                perror("Failed to allocate memory for cell");
-                quit_nuget(table, NULL, EXIT_FAILURE);
-            }
-        }
+    Cell_t *cell = get_cell(table, location);
+    if (cell->str != NULL) {
+        free(cell->str);
     }
-    strncpy(*cell, text, table->cell_width + 1);
-}
 
-/**
- * @brief Helper function which applies colors and other attributes to a cell in the table.
- * @since 08-09-2024
- * @param location The location of the cell that will be updated
- * @param col_pair The color pair that shall be applied to the cell at location
- * @param attrs The attributes that will be applied to the cell at location
- */
-void set_cell_attrs(
-    TableCtx_t *table,
-    const Point_t location,
-    const NugetCol_t col_pair,
-    const uint64_t attrs
-) {
-    mvchgat(
-        location.y,
-        location.x * table->cell_width,
-        table->cell_width,
-        attrs,
-        col_pair,
-        NULL
-    );
+    cell->str = malloc(cell->len * sizeof(char));
+    if (cell->str == NULL) {
+        cell->len = 0;
+        return;
+    }
+
+    cell->len = strlen(text);
+    memcpy(cell->str, text, strlen(text));
 }
 
 /**
@@ -183,21 +180,19 @@ void set_cell_attrs(
  */
 void draw_col_labels(TableCtx_t *table) {
     const size_t base = 26;
+    uint64_t msb = table->abs_offset.x;
+    uint64_t lsb = table->abs_offset.x;
 
-    uint64_t msb, lsb;
-    msb = lsb = table->abs_offset.x;
-
-    char col_id[3];
+    char col_id[3] = { 0 };
     for (unsigned x = 1, i = 0; x < table->nvis_cols; ++x, ++i) {
         col_id[0] = ((msb + i) / base) + 'A';
         col_id[1] = ((lsb + i) % base) + 'A';
-        col_id[2] = '\0';
         mvprintw(0, x * table->cell_width, "%s", col_id);
 
         if (x == table->cursor.x) {
-            set_cell_attrs(table, (Point_t){ x, 0 }, PRIMARY_INV, A_BOLD);
+            set_cell_attrs(table, (Point_t){ x, 0 }, PRIMARY_INV, BOLD);
         } else {
-            set_cell_attrs(table, (Point_t){ x, 0 }, PRIMARY, A_BOLD);
+            set_cell_attrs(table, (Point_t){ x, 0 }, PRIMARY, BOLD);
         }
     }
 }
@@ -208,17 +203,16 @@ void draw_col_labels(TableCtx_t *table) {
  * @param table The table context object
  */
 void draw_row_labels(TableCtx_t *table) {
-    char *row_id = NULL;
     for (unsigned y = 1, row_num = table->abs_offset.y + 1; y < table->nvis_rows; ++y, ++row_num) {
         // TODO: Could fail if column width is too small
-        row_id = n_itoa(row_num);
+        char *row_id = n_itoa(row_num);
         mvprintw(y, 0, "%s", row_id);
         free(row_id);
 
         if (y == table->cursor.y) {
-            set_cell_attrs(table, (Point_t){ 0, y }, PRIMARY_INV, A_BOLD);
+            set_cell_attrs(table, (Point_t){ 0, y }, PRIMARY_INV, BOLD);
         } else {
-            set_cell_attrs(table, (Point_t){ 0, y }, PRIMARY, A_BOLD);
+            set_cell_attrs(table, (Point_t){ 0, y }, PRIMARY, BOLD);
         }
     }
 }
@@ -232,7 +226,7 @@ void draw_row_labels(TableCtx_t *table) {
  * @param align The preferred alignment of the cell's text
  * @param selected True if the cell being drawn shares the position of the cursor, or false otherwise
  */
-void draw_cell(
+void render_cell(
     TableCtx_t *table,
     const Point_t location,
     const Align_t align,
@@ -240,30 +234,21 @@ void draw_cell(
 ) {
     const char *ellipses = "...";
     char *padding = NULL;
-    char *final_str = NULL;
 
-    cell_t cell = *get_cell_value(table, location);
-    if (cell != NULL && table->cell_width >= strlen(ellipses)) {
-        padding = get_cell_padding(table, align, cell);
-
-        final_str = malloc((strlen(padding) + strlen(cell) + 1) * sizeof(char));
-        if (final_str == NULL) {
-            perror("Failed to allocate memory for temporary cell");
-            goto set_attrs;
-        }
-
-        final_str[0] = '\0';
-        strncat(final_str, padding, strlen(padding));
-        strncat(final_str, cell, strlen(cell));
-
-        if (strlen(final_str) > table->cell_width) {
-            strncpy(final_str + table->cell_width - strlen(ellipses), ellipses, strlen(ellipses) + 1);
-        }
-
-        mvprintw(location.y, location.x * table->cell_width, "%s", final_str);
-        free(padding);
-        free(final_str);
+    const Cell_t cell = *get_cell(table, location);
+    size_t final_str_len = MIN(cell.len, table->cell_width);
+    char *final_str = malloc(final_str_len * sizeof(char));
+    if (final_str == NULL) {
+        goto set_attrs;
     }
+
+    memcpy(final_str, cell.str, cell.len);
+    if (cell.len > table->cell_width) {
+        memcpy(final_str + final_str_len - strlen(ellipses), ellipses, strlen(ellipses));
+    }
+
+    mvaddnstr(location.y, location.x * table->cell_width, final_str, final_str_len);
+    free(final_str);
 
 set_attrs:
 
@@ -289,7 +274,7 @@ void refresh_table(TableCtx_t *table) {
     for (uint64_t y = table->table_offset.y; y < table->nvis_rows; ++y) {
         for (uint64_t x = table->table_offset.x; x < table->nvis_cols; ++x) {
             selected = (x == table->cursor.x) && (y == table->cursor.y);
-            draw_cell(table, (Point_t){ x, y }, ALIGN_LEFT, selected);
+            render_cell(table, (Point_t){ x, y }, ALIGN_LEFT, selected);
         }
     }
 

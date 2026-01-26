@@ -3,4 +3,4 @@
 
 #include "common.h"
 
-#endif /* SETTINGS_H */
+#endif

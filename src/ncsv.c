@@ -1,6 +1,6 @@
 #include "ncsv.h"
 
-static Point_t top_left = { 0 };
+static Point_t top_left = { 0, 0 };
 
 /**
  * @brief Callback invoked by csv_parse() when a field has been read.
@@ -13,7 +13,7 @@ static Point_t top_left = { 0 };
 static void cb1(void *field, size_t field_len, void *data) {
     TableCtx_t *table = (TableCtx_t*)data;
 
-    set_cell_value(table, field, top_left);
+    set_cell_text(table, top_left, field);
     top_left.x++;
 }
 

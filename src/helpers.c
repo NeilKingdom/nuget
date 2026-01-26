@@ -66,7 +66,7 @@ double n_atod(const char* const a) {
  * @param hex The textual string representation of the RGB888 color
  * @returns A Color_t struct containing the values parsed from hex
  */
-Color_t hex_to_rgb(const char* const hex) {
+RGB888_t hex_to_rgb(const char* const hex) {
     const size_t nibbles = 2;
     char *r = alloca(nibbles + 1);
     char *g = alloca(nibbles + 1);
@@ -91,7 +91,7 @@ Color_t hex_to_rgb(const char* const hex) {
     // Compute RGB888 values
     int bad_range = 'A' - '9' - 1; // Unused ASCII chars between digits and uppercase
 
-    Color_t color = { 0 };
+    RGB888_t color = { 0 };
     color.r |= (r[0] <= '9') ? (r[0] - '0') << 4 : (r[0] - '0' - bad_range) << 4;
     color.r |= (r[1] <= '9') ? (r[1] - '0')      : (r[1] - '0' - bad_range);
     color.g |= (g[0] <= '9') ? (g[0] - '0') << 4 : (g[0] - '0' - bad_range) << 4;
