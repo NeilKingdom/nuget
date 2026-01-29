@@ -1,6 +1,6 @@
 #include "ncsv.h"
 
-static Point_t top_left = { 0, 0 };
+static Point_t next = { 0, 0 };
 
 /**
  * @brief Callback invoked by csv_parse() when a field has been read.
@@ -13,8 +13,8 @@ static Point_t top_left = { 0, 0 };
 static void cb1(void *field, size_t field_len, void *data) {
     TableCtx_t *table = (TableCtx_t*)data;
 
-    set_cell_text(table, top_left, field);
-    top_left.x++;
+    set_cell_text(table, next, field, field_len);
+    next.x++;
 }
 
 /**
@@ -27,8 +27,8 @@ static void cb2(int eol, void *data) {
     TableCtx_t *table = (TableCtx_t*)data;
     // TODO: validation on eol?
 
-    top_left.x = table->table_offset.x;
-    top_left.y++;
+    next.x = table->table_offset.x;
+    next.y++;
 }
 
 /**
@@ -65,7 +65,7 @@ void read_csv_data(TableCtx_t *table, ncsv_t *csv_ctx, const char* const fname) 
     }
     fread(buf, len, 1, fp);
 
-    top_left = table->table_offset;
+    next = table->table_offset;
     nb_read = csv_parse(csv_ctx, buf, len, cb1, cb2, (void*)table);
     if (nb_read != len) {
         csv_error(csv_ctx);

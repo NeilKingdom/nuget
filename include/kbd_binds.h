@@ -51,44 +51,47 @@ static void insert_mode(TableCtx_t *table, void **args) {
     WINDOW *dialog = newwin(height, width, table->cursor.y, table->cursor.x * table->cell_width);
     PANEL *dialog_panel = new_panel(dialog);
 
-    char buffer[256];
-    unsigned buflen = MIN(cell->len, sizeof(buffer) - 1);
-    memcpy(buffer, cell->str, buflen);
-    buffer[buflen] = '\0';
+    char buf[256];
+    size_t buf_sz = sizeof(buf);
+    unsigned buf_off = MIN(cell->len, (buf_sz - 1));
+    memcpy(buf, cell->str, buf_off);
+    buf[buf_off] = '\0';
 
-    keysym_t c;
+    char c;
     do {
-        width = MIN(MAX(buflen, table->cell_width), table->cell_width * 4);
-        height = (int)ceilf((float)buflen / (float)width);
+        width = MIN(MAX(buf_off, table->cell_width), table->cell_width * 4);
+        height = (int)ceilf((float)buf_off / (float)width);
+        width  = MAX(width, 1);
+        height = MAX(height, 1);
         wresize(dialog, height, width);
 
         wclear(dialog);
         for (unsigned y = 0; y < height; ++y) {
             unsigned nchars_prior = y * width;
-            if (nchars_prior >= buflen) {
+            if (nchars_prior >= buf_off) {
                 break;
             }
-            mvwprintw(dialog, y, 0, "%.*s", MIN(width, buflen - nchars_prior), buffer + nchars_prior);
+            mvwprintw(dialog, y, 0, "%.*s", MIN(width, buf_off - nchars_prior), buf + nchars_prior);
             mvwchgat(dialog, y, 0, width, NORMAL, SECONDARY, NULL);
         }
 
-        int cursor_y = buflen / width;
-        int cursor_x = buflen % width;
+        int cursor_y = buf_off / width;
+        int cursor_x = buf_off % width;
         wmove(dialog, cursor_y, cursor_x);
 
         top_panel(dialog_panel);
         update_panels();
         doupdate();
 
-        c = (keysym_t)wgetch(dialog);
-        if (buflen < sizeof(buffer) && c >= ' ' && c <= '~') {
-            buffer[buflen++] = c;
+        c = wgetch(dialog);
+        if (buf_off < (buf_sz - 1) && c >= ' ' && c <= '~') {
+            buf[buf_off++] = c;
+            buf[buf_off] = '\0';
         }
-    } while (c != '\n' && c != XK_Escape);
+    } while (c != '\n' && c != 27); // TODO: Change 27 to escape
 
     if (c == '\n') {
-        buffer[buflen] = '\0';
-        set_cell_text(table, table->cursor, buffer);
+        set_cell_text(table, table->cursor, buf, buf_off);
     }
 
     del_panel(dialog_panel);

@@ -21,12 +21,12 @@ typedef struct {
     Cell_t *arena;         // Table data
 } TableCtx_t;
 
-// Forward function decls
+// Forward function declarations
 
 TableCtx_t     *create_table_ctx(void);
 void            destroy_table_ctx(TableCtx_t *table);
 Cell_t         *get_cell(TableCtx_t *table, const Point_t location);
-void            set_cell_text(TableCtx_t *table, const Point_t location, const char* const text);
+void            set_cell_text(TableCtx_t *table, const Point_t location, const char* const text, const size_t text_len);
 void            render_cell(TableCtx_t *table, const Point_t location, const Align_t align, const bool selected);
 void            render_row_labels(TableCtx_t *table);
 void            render_col_labels(TableCtx_t *table);

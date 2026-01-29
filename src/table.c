@@ -116,8 +116,8 @@ void destroy_table_ctx(TableCtx_t *table) {
     Cell_t *cell = table->arena;
     const uint64_t table_size = MAX_ROWS * MAX_COLS;
     for (uint64_t i = 0; i < table_size; ++i) {
-        if ((cell + i)->str) {
-            free((cell + i)->str);
+        if (cell[i].str) {
+            free(cell[i].str);
         }
     }
 
@@ -152,25 +152,27 @@ Cell_t *get_cell(TableCtx_t *table, const Point_t location) {
 void set_cell_text(
     TableCtx_t *table,
     const Point_t location,
-    const char* const text
+    const char* const text,
+    const size_t text_len
 ) {
-    if (text == NULL) {
-        return;
-    }
-
     Cell_t *cell = get_cell(table, location);
-    if (cell->str != NULL) {
-        free(cell->str);
-    }
 
-    cell->str = malloc(cell->len * sizeof(char));
-    if (cell->str == NULL) {
+    if (!text || text_len == 0) {
+        free(cell->str);
+        cell->str = NULL;
         cell->len = 0;
         return;
     }
 
-    cell->len = strlen(text);
-    memcpy(cell->str, text, strlen(text));
+    char *new_str = realloc(cell->str, text_len);
+    if (!new_str) {
+        // realloc failed; old cell->str is still valid
+        return;
+    }
+
+    cell->str = new_str;
+    memcpy(cell->str, text, text_len);
+    cell->len = text_len;
 }
 
 /**
@@ -236,23 +238,26 @@ void render_cell(
     char *padding = NULL;
 
     const Cell_t cell = *get_cell(table, location);
-    size_t final_str_len = MIN(cell.len, table->cell_width);
-    char *final_str = malloc(final_str_len * sizeof(char));
+
+    size_t final_len = MIN(cell.len, table->cell_width);
+    if (final_len == 0) {
+        goto set_attrs;
+    }
+
+    char *final_str = malloc(final_len);
     if (final_str == NULL) {
         goto set_attrs;
     }
 
-    memcpy(final_str, cell.str, cell.len);
-    if (cell.len > table->cell_width) {
-        memcpy(final_str + final_str_len - strlen(ellipses), ellipses, strlen(ellipses));
+    memcpy(final_str, cell.str, final_len);
+    if (cell.len > table->cell_width && final_len >= strlen(ellipses)) {
+        memcpy(final_str + final_len - strlen(ellipses), ellipses, strlen(ellipses));
     }
 
-    mvaddnstr(location.y, location.x * table->cell_width, final_str, final_str_len);
+    mvaddnstr(location.y, location.x * table->cell_width, final_str, final_len);
     free(final_str);
 
 set_attrs:
-
-    // Set appropriate attributes for the cell
     if (selected) {
         set_cell_attrs(table, location, CURSOR, A_BOLD);
     } else {
