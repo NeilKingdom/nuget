@@ -157,20 +157,19 @@ void set_cell_text(
 ) {
     Cell_t *cell = get_cell(table, location);
 
-    if (!text || text_len == 0) {
+    if (text == NULL || text_len == 0) {
         free(cell->str);
         cell->str = NULL;
         cell->len = 0;
         return;
     }
 
-    char *new_str = realloc(cell->str, text_len);
-    if (!new_str) {
-        // realloc failed; old cell->str is still valid
+    cell->str = realloc(cell->str, text_len);
+    if (cell->str == NULL) {
+        cell->len = 0;
         return;
     }
 
-    cell->str = new_str;
     memcpy(cell->str, text, text_len);
     cell->len = text_len;
 }
@@ -235,6 +234,7 @@ void render_cell(
     const bool selected
 ) {
     const char *ellipses = "...";
+    // TODO
     char *padding = NULL;
 
     const Cell_t cell = *get_cell(table, location);
@@ -250,7 +250,7 @@ void render_cell(
     }
 
     memcpy(final_str, cell.str, final_len);
-    if (cell.len > table->cell_width && final_len >= strlen(ellipses)) {
+    if (cell.len > table->cell_width) {
         memcpy(final_str + final_len - strlen(ellipses), ellipses, strlen(ellipses));
     }
 

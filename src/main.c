@@ -62,11 +62,14 @@ static void exec_kc_callback(TableCtx_t *table, keysym_t *input_seq, int *input_
             num_bindings = sizeof(vis_bindings) / sizeof(vis_bindings[0]);
             bindings = vis_bindings;
             break;
+        case COMMAND:
+            return;
     }
 
     int binding_seq_len;
     bool prefix_match_found = false;
     for (unsigned i = 0; i < num_bindings; ++i) {
+        bool found_match = true;
         KeyChord_t curr_binding = bindings[i];
 
         // Get current binding keychord sequence length
@@ -75,14 +78,25 @@ static void exec_kc_callback(TableCtx_t *table, keysym_t *input_seq, int *input_
             binding_seq_len++;
         }
 
-        // Check if first n characters of the binding's sequence match what was entered
-        if (*input_seq_off < binding_seq_len && memcmp(input_seq, curr_binding.seq, *input_seq_off) == 0) {
-            prefix_match_found = true;
+        // Compare input against binding prefix
+        for (int j = 0; j < *input_seq_off; ++j) {
+            if (j >= binding_seq_len ||
+                (curr_binding.seq[j] != input_seq[j] &&
+                 curr_binding.seq[j] != '*')) {
+                found_match = false;
+                break;
+            }
+        }
+
+        if (!found_match) {
             continue;
         }
 
-        // If match found, execute
-        if (*input_seq_off == binding_seq_len && memcmp(input_seq, curr_binding.seq, *input_seq_off) == 0) {
+        // We're matching up until this point...
+        prefix_match_found = true;
+
+        // Matched full sequence. Excecute callback!
+        if (*input_seq_off == binding_seq_len) {
             curr_binding.func(table, curr_binding.args);
             *input_seq_off = 0;
             memset(input_seq, XK_NULL, KEYSTROKE_MAX);
@@ -90,7 +104,7 @@ static void exec_kc_callback(TableCtx_t *table, keysym_t *input_seq, int *input_
         }
     }
 
-    // No bindings match the input sequence, so reset the input sequence
+    // Exhausted all possible bindings, so reset the input sequence
     if (!prefix_match_found) {
         *input_seq_off = 0;
         memset(input_seq, XK_NULL, KEYSTROKE_MAX);
@@ -107,7 +121,7 @@ static void exec_kc_callback(TableCtx_t *table, keysym_t *input_seq, int *input_
 static void handle_input(TableCtx_t *table, keysym_t *input_seq, int *input_seq_off) {
     keysym_t c = (keysym_t)getch();
     if (*input_seq_off == KEYSTROKE_MAX) {
-        input_seq_off = 0;
+        *input_seq_off = 0;
         memset(input_seq, XK_NULL, KEYSTROKE_MAX);
         return;
     }
