@@ -1,5 +1,5 @@
-#ifndef KBD_H
-#define KBD_H
+#ifndef KBD_BINDS_H
+#define KBD_BINDS_H
 
 #include <X11/keysym.h>
 
@@ -14,6 +14,12 @@
 typedef int32_t keysym_t;
 typedef void (*kc_callback)(TableCtx_t *table, void **args);
 
+typedef struct {
+    keysym_t    seq[KEYSTROKE_MAX]; // The sequence of keys that make up the chord (NULL-terminated)
+    kc_callback func;               // A callback to be performed when the sequence is completed
+    void       *args[8];            // Argument list for the function
+} KeyChord_t;
+
 typedef enum {
     NORMAL,
     INSERT,
@@ -23,11 +29,10 @@ typedef enum {
 
 static Mode_t curr_mode = NORMAL;
 
-typedef struct {
-    keysym_t    seq[KEYSTROKE_MAX]; // The sequence of keys that make up the chord (NULL-terminated)
-    kc_callback func;               // A callback to be performed when the sequence is completed
-    void       *args[8];            // Argument list for the function
-} KeyChord_t;
+/*** Forward function declarations ***/
+
+void handle_input(TableCtx_t *table, keysym_t *input_seq, int *input_seq_off);
+void exec_kc_callback(TableCtx_t *table, keysym_t *input_seq, int *input_seq_off);
 
 /*** Static declarations ***/
 
