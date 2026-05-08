@@ -32,14 +32,8 @@ static Mode_t curr_mode = NORMAL;
 /*** Forward function declarations ***/
 
 void handle_input(TableCtx_t *table, keysym_t *input_seq, int *input_seq_off);
-void exec_kc_callback(TableCtx_t *table, keysym_t *input_seq, int *input_seq_off);
 
-/*** Static declarations ***/
-
-static Direction_t left  = LEFT;
-static Direction_t right = RIGHT;
-static Direction_t up    = UP;
-static Direction_t down  = DOWN;
+/*** Keychord callbacks ***/
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
@@ -219,6 +213,12 @@ static void move_cursor(TableCtx_t *table, void **args) {
 #endif
 
 /*** Bindings ***/
+
+// Args
+static Direction_t left  = LEFT;
+static Direction_t right = RIGHT;
+static Direction_t up    = UP;
+static Direction_t down  = DOWN;
 
 // Normal mode bindings
 static KeyChord_t norm_bindings[] = {

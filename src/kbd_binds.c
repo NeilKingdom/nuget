@@ -1,13 +1,28 @@
 #include "kbd_binds.h"
 
 /**
+ * @file kbd_binds.c
+ * @author Neil Kingdom
+ * @since 30-01-2026
+ * @version 1.0
+ *
+ * This file contains functions to handle user input. Callbacks are executed
+ * when the user enters a sequence of keys that match a pre-defined keychord in
+ * the appropriate mode (i.e., normal, insert, visual, command).
+ */
+
+/*==============================
+        Private Functions
+ =============================*/
+
+/**
  * @brief Executes the callback function associated with any keychords matching the user's input sequence.
  * @since 01-09-2024
  * @param table A reference to the table context object
  * @param input_seq The input sequence entered by the user
- * @param input_seq_off The current offset into the user_input_seq buffer
+ * @param input_seq_off The current offset into the input_seq buffer
  */
-void exec_kc_callback(TableCtx_t *table, keysym_t *input_seq, int *input_seq_off) {
+static void exec_kc_callback(TableCtx_t *table, keysym_t *input_seq, int *input_seq_off) {
     size_t num_bindings;
     KeyChord_t *bindings = NULL;
     switch (curr_mode) {
@@ -71,6 +86,10 @@ void exec_kc_callback(TableCtx_t *table, keysym_t *input_seq, int *input_seq_off
         memset(input_seq, XK_NULL, KEYSTROKE_MAX);
     }
 }
+
+/*==============================
+        Public Functions
+ =============================*/
 
 /**
  * @brief Blocks waiting for user input from stdscr and then adds it to input_seq for processing.
