@@ -17,15 +17,21 @@ LDFLAGS += -lc -lm -lcurses -lpanel -lcsv
 
 BIN := nuget
 
+all: prebuild $(BIN)
+
 $(BIN): $(OBJS)
 	$(CC) $^ -o $@ $(CCFLAGS) $(LDFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $< -c -o $@ $(CCFLAGS)
 
+# Pre-build actions
+prebuild:
+	mkdir -p $(OBJ_DIR)
+
 rebuild: clean $(BIN)
 
 clean:
 	rm -f $(OBJS) $(BIN)
 
-.PHONY: clean rebuild
+.PHONY: all rebuild prebuild clean
