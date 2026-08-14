@@ -1,8 +1,8 @@
-CC = gcc
+CC ?= gcc
 PROFILE ?= DEBUG
 
-CCFLAGS_DEBUG = -ggdb -O0 -fno-builtin -DDEBUG
-CCLFLAGS_RELEASE = -Os
+CCFLAGS_DEBUG := -ggdb -O0 -fno-builtin -DDEBUG
+CCLFLAGS_RELEASE := -Os
 
 SRC_DIR := src
 INC_DIR := include

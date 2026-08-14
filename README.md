@@ -1,21 +1,30 @@
 ```
-                        _   
- _ __  _   _  __ _  ___| |_ 
+                        _
+ _ __  _   _  __ _  ___| |_
 | '_ \| | | |/ _` |/ _ \ __|
-| | | | |_| | (_| |  __/ |_ 
+| | | | |_| | (_| |  __/ |_
 |_| |_|\__,_|\__, |\___|\__|
-             |___/          
+             |___/
 ```
 
 ---
 
 # About
 
-N/A
+Personal budgetting software written in C and leveraging the popular ncurses library. This program is effectively a
+terminal-based MS Excel clone, but with a much more narrow scope in terms of capabilities. Nuget is only capable of
+reading/writing CSV files. Settings are configured via a JSON file.
 
 # Dependencies
 
-N/A
+### Personal Libraries:
+
+- libjsc: For parsing JSON files
+
+### 3rd Party Libraries:
+
+- ncurses: Provides APIs for "drawing" to the terminal
+- libcsv: For parsing CSV files
 
 # Usage
 

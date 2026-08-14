@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
     setup_curses();
 
     // TODO: Action should be triggered by user
-    read_csv_data(table, &csv_ctx, "/home/neil/devel/projects/nuget/2024.csv");
+    //read_csv_data(table, &csv_ctx, "/home/neil/devel/projects/nuget/2024.csv");
 
     // Program loop
     while (true) {
